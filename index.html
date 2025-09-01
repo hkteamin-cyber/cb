@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CBON - 手機充值之家</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.svg">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-app">
+        <!-- 頂部 Logo 區 -->
+        <header class="mobile-header">
+            <div class="logo-area">
+                <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+                <h1>CBON</h1>
+                <p>手機充值之家</p>
+            </div>
+        </header>
+
+        <!-- 主要優惠展示區 -->
+        <main class="offers-section">
+            <!-- 區塊 1：即買即發充值碼（本地 codes.html） -->
+            <div class="offer-card featured" onclick="location.href='https://c----b.web.app/codes.html'" role="link" tabindex="0">
+                <div class="offer-badge">即買即發</div>
+                <h3>即買即發充值碼</h3>
+                <div class="offer-features">
+                    <div class="feature">💳 即買即派</div>
+                    <div class="feature">🔐 Stripe 保障</div>
+                </div>
+                <span class="buy-btn-main" onclick="location.href='https://c----b.web.app/codes.html'">
+                    <i class="fas fa-bolt"></i>
+                    <span>前往</span>
+                    <div class="btn-glow"></div>
+                </span>
+            </div>
+
+            <!-- 區塊 2：前往 EShop（外部商城） -->
+            <div class="offer-card featured" onclick="location.href='https://cbon.shop.sn.cn/#/index'" role="link" tabindex="0">
+                <div class="offer-badge">商城</div>
+                <h3>前往 EShop</h3>
+                <div class="offer-features">
+                    <div class="feature">🛒 多品類</div>
+                    <div class="feature">🚀 快速到貨</div>
+                </div>
+                <span class="buy-btn-main">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>前往</span>
+                    <div class="btn-glow"></div>
+                </span>
+            </div>
+
+            <div class="offers-grid">
+                <div class="offer-card">
+                    <h4>充值碼</h4>
+                    <p>即買即派</p>
+                    <div class="offer-icon">💳</div>
+                </div>
+                <div class="offer-card">
+                    <h4>24/7客服</h4>
+                    <p>隨時支援</p>
+                    <div class="offer-icon">🛡️</div>
+                </div>
+                <div class="offer-card">
+                    <h4>安全支付</h4>
+                    <p>Stripe保障</p>
+                    <div class="offer-icon">🔒</div>
+                </div>
+                <div class="offer-card">
+                    <h4>AI智能</h4>
+                    <p>智能客服</p>
+                    <div class="offer-icon">🤖</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 公司資訊（中文） -->
+        <footer class="site-footer">
+            <div class="footer-container">
+                <h3 class="footer-title">公司資訊</h3>
+                <ul class="footer-list">
+                    <li>
+                        <strong>公司業務：</strong>
+                        <span>主力銷售電話卡，提供即買即發的充值碼服務</span>
+                    </li>
+                    <li>
+                        <strong>實體店舖地址：</strong>
+                        <span>九龍旺角亞皆老街83號先達廣場1樓F88舖</span>
+                    </li>
+                    <li>
+                        <strong>香港辦公室地址：</strong>
+                        <span>香港黃竹坑道4號怡達工業大廈D座6樓625室</span>
+                    </li>
+                </ul>
+            </div>
+        </footer>
+
+        <!-- 底部五個導航按鈕 -->
+        <nav class="bottom-nav-mobile">
+            <!-- 移除 WhatsApp 與 Telegram 導航按鈕 -->
+            <a href="https://cbon.shop.sn.cn/#/index" class="nav-btn eshop">
+                <i class="fas fa-shopping-cart"></i>
+                <span>EShop</span>
+            </a>
+            <a href="codes.html" class="nav-btn topup">
+                <i class="fas fa-credit-card"></i>
+                <span>Code</span>
+            </a>
+            <a href="ai-chat.html" class="nav-btn ai">
+                <i class="fas fa-robot"></i>
+                <span>AI</span>
+            </a>
+            <a href="account.html" class="nav-btn account">
+                <i class="fas fa-user"></i>
+                <span>會員</span>
+            </a>
+            <a href="/speedtest.html" class="nav-btn" style="background:#0ea5e9;color:#0b1220;">
+                <i class="fas fa-gauge"></i>
+                <span>Speed</span>
+            </a>
+        </nav>
+        
+        <!-- 移動端登錄問題提示浮動按鈕 -->
+        <div id="mobileLoginHint" class="mobile-login-hint" style="display: none;">
+            <a href="mobile-login-fix.html" class="hint-btn">
+                <i class="fas fa-mobile-alt"></i>
+                <span>登錄問題？</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // 检测移动设备并显示登陆问题提示
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+                   (navigator.maxTouchPoints > 1 && /MacIntel/.test(navigator.platform));
+        }
+        
+        // 检查是否需要显示移动登陆提示
+        function checkShowMobileLoginHint() {
+            const hint = document.getElementById('mobileLoginHint');
+            if (!hint) return;
+            
+            // 只在移动设备上显示
+            if (isMobileDevice()) {
+                // 检查是否已经隐藏过该提示
+                const hiddenUntil = localStorage.getItem('mobileLoginHintHidden');
+                const now = Date.now();
+                
+                if (!hiddenUntil || now > parseInt(hiddenUntil)) {
+                    hint.style.display = 'block';
+                    
+                    // 5秒后自动隐藏
+                    setTimeout(() => {
+                        hint.style.display = 'none';
+                        // 24小时后再次显示
+                        localStorage.setItem('mobileLoginHintHidden', (now + 24 * 60 * 60 * 1000).toString());
+                    }, 5000);
+                }
+            }
+        }
+        
+        // 页面加载完成后检查
+        document.addEventListener('DOMContentLoaded', checkShowMobileLoginHint);
+    </script>
+    
+    <style>
+        /* 移动端登陆提示样式 */
+        .mobile-login-hint {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .hint-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(245,158,11,0.9);
+            color: #ffffff;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(245,158,11,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .hint-btn:hover {
+            background: rgba(245,158,11,1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(245,158,11,0.4);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .mobile-login-hint {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .hint-btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</body>
+</html>

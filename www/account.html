@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>會員中心 - CBON</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E💳%3C/text%3E%3C/svg%3E">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#0f1115; color:#fff; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang HK','PingFang TC','Microsoft JhengHei','Noto Sans TC',sans-serif; }
+    .container { max-width:720px; margin:0 auto; padding:20px 16px 80px; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .title { display:flex; align-items:center; gap:10px; font-size:1.2rem; font-weight:800; margin:0 0 6px; }
+    .subtitle { color:#cbd5e1; margin:0 0 12px; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .btn { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); color:#fff; background:rgba(255,255,255,0.06); cursor:pointer; }
+    .btn-primary { background: linear-gradient(135deg,#4285F4,#34A853); border:none; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:700; }
+    .pill-green { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+    .muted { color:#94a3b8; }
+    .list { margin-top:14px; }
+    .item { display:flex; justify-content:space-between; align-items:center; padding:12px 10px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .item .left { display:flex; flex-direction:column; gap:6px; }
+    .item .title { font-size:1rem; font-weight:700; margin:0; }
+    .item .desc { color:#cbd5e1; font-size:.9rem; }
+    .item .points { font-weight:800; color:#ffb020; }
+    .center { text-align:center; }
+    .avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .member-number { font-family: 'Courier New', monospace; font-weight:800; color:#3b82f6; }
+    .status-bound { color:#22c55e; }
+    .status-unbound { color:#94a3b8; }
+    .home-btn { background:rgba(34,197,94,0.2) !important; border-color:#22c55e !important; color:#22c55e !important; text-decoration:none; font-size:0.9rem; height:32px; padding:0 12px; transition: all 0.2s ease; }
+    .home-btn:hover { background:rgba(34,197,94,0.3) !important; transform: translateY(-1px); }
+    @media (max-width: 480px) {
+      .home-btn span { display: none; }
+      .home-btn { padding: 0 8px; min-width: 32px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON" style="width:28px;height:28px;border-radius:8px;object-fit:cover;"/></a>
+        <div style="font-weight:800; flex:1;">會員中心</div>
+        <a href="https://c----b.web.app/" class="btn home-btn" title="返回首頁">
+          <i class="fas fa-home"></i><span>返回首頁</span>
+        </a>
+      </div>
+
+      <div id="authBox" class="row" style="margin-bottom:12px;">
+        <img id="avatar" class="avatar" src="" alt="" style="display:none;"/>
+        <div id="userInfo" class="muted" style="flex:1;">尚未登入</div>
+        <button id="loginBtn" class="btn btn-primary"><i class="fab fa-google"></i><span>使用 Google 登入</span></button>
+        <button id="logoutBtn" class="btn" style="display:none;"><i class="fas fa-sign-out-alt"></i><span>登出</span></button>
+      </div>
+      
+      <!-- 移動端登入問題提示 -->
+      <div id="mobileLoginHelp" class="row" style="display:none; margin-bottom:16px; padding:12px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:10px;">
+        <div style="flex:1; font-size:0.9rem;">
+          <div style="color:#fbbf24; font-weight:600; margin-bottom:4px;"><i class="fas fa-mobile-alt"></i> 手機登入遇到問題？</div>
+          <div style="color:#cbd5e1;">如果登入按鈕無反應，可能是彈窗被阻止</div>
+        </div>
+        <a href="mobile-login-fix.html" class="btn" style="background:rgba(245,158,11,0.2); border-color:#fbbf24; color:#fbbf24; font-size:0.85rem; height:32px; padding:0 10px;">
+          <i class="fas fa-wrench"></i><span>修復助手</span>
+        </a>
+      </div>
+
+      <div class="pill pill-green" id="pointsPill" style="display:none;">
+        <i class="fas fa-star"></i>
+        <span>我的累積積分：</span>
+        <span id="totalPoints" style="font-weight:900;">0</span>
+      </div>
+
+      <!-- 會員號碼綁定功能 -->
+      <div id="memberBindingPanel" class="row" style="display:none; margin-top:16px; padding:16px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px;">
+        <div style="flex:1;">
+          <div style="font-weight:700; color:#3b82f6; margin-bottom:8px;"><i class="fas fa-id-card"></i> 會員號碼綁定</div>
+          <div id="bindingStatus" style="font-size:0.9rem; color:#cbd5e1; margin-bottom:12px;">您可以綁定您的4位數會員號碼</div>
+          
+          <div id="bindingForm" class="row" style="gap:8px; flex-wrap:wrap;">
+            <input type="text" id="memberNumberInput" placeholder="請輸入4位數會員號碼" 
+                   style="flex:1; min-width:160px; height:36px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.06); color:#fff; font-size:14px;"
+                   maxlength="4" pattern="[0-9]{1,4}">
+            <button id="bindBtn" class="btn" style="background:rgba(59,130,246,0.2); border-color:#3b82f6; color:#3b82f6; height:36px; padding:0 12px;">
+              <i class="fas fa-link"></i><span>綁定</span>
+            </button>
+          </div>
+          
+          <div id="unbindSection" style="display:none; margin-top:12px;">
+            <button id="unbindBtn" class="btn" style="background:rgba(239,68,68,0.1); border-color:#ef4444; color:#ef4444; height:32px; padding:0 10px; font-size:0.85rem;">
+              <i class="fas fa-unlink"></i><span>解除綁定</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管理員功能入口 -->
+      <div id="adminPanel" class="row" style="display:none; margin-top:16px; padding:12px; background:rgba(255,193,7,0.1); border:1px solid rgba(255,193,7,0.3); border-radius:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:700; color:#ffc107;"><i class="fas fa-crown"></i> 管理員功能</div>
+          <div style="font-size:0.9rem; color:#cbd5e1;">會員整合與系統管理</div>
+        </div>
+        <button id="adminBtn" class="btn" style="background:rgba(255,193,7,0.2); border-color:#ffc107; color:#ffc107;">
+          <i class="fas fa-cog"></i><span>管理中心</span>
+        </button>
+      </div>
+
+      <!-- 新增：客服與社群 -->
+      <div style="margin-top:16px;">
+        <div style="font-weight:700; color:#cbd5e1; margin-bottom:8px;">
+          <i class="fas fa-headset"></i> 客服與社群
+        </div>
+        <div class="row" style="gap:8px; flex-wrap:wrap;">
+          <a href="https://chat.whatsapp.com/JiJ6SlwGVfrAl1YU6qonWC" class="btn" style="background:#25D366;border-color:#25D366;color:#0b1220;">
+            <i class="fab fa-whatsapp"></i><span>WhatsApp 客服</span>
+          </a>
+          <a href="https://t.me/cbonshare?boost" class="btn" style="background:#0088cc;border-color:#0088cc;color:#0b1220;">
+            <i class="fab fa-telegram-plane"></i><span>Telegram 支持</span>
+          </a>
+          <a href="/speedtest-records.html" class="btn" style="background:rgba(14,165,233,0.2);border-color:#0ea5e9;color:#0ea5e9;">
+            <i class="fas fa-gauge"></i><span>查看最近測速紀錄</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="list" id="historyList" style="display:none;">
+        <!-- 歷史積分明細 -->
+      </div>
+
+      <div id="emptyState" class="center muted" style="display:none;margin-top:16px;">尚無積分紀錄</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 在開發模式下加載模擬API
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      try {
+        await import('./js/mock-api.js');
+        console.log('🚀 [開發模式] 模擬API已加載');
+      } catch (error) {
+        console.warn('⚠️ [開發模式] 模擬API加載失敗:', error);
+      }
+    }
+
+    import { auth, signInWithGoogle, signOutUser, waitForAuth, onAuthStateChanged } from './js/firebase-config.js?v=4';
+
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const avatar = document.getElementById('avatar');
+    const pointsPill = document.getElementById('pointsPill');
+    const totalPointsEl = document.getElementById('totalPoints');
+    const historyList = document.getElementById('historyList');
+    const emptyState = document.getElementById('emptyState');
+
+    const APPS_SCRIPT_ENDPOINT = localStorage.getItem('CBON_APPS_SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbwhdaWJHQV9sEbcNUP9bQmjjxYTk0HdNif_QKEqunp6fQfyufGiax14l2H36kpBssvyPQ/exec';
+
+    // 检测是否为移动设备
+    function isMobileDevice() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+             (navigator.maxTouchPoints > 1 && /MacIntel/.test(navigator.platform));
+    }
+
+    // 检测移动端登录问题并显示帮助提示
+    function checkMobileLoginIssues(user) {
+      const helpPanel = document.getElementById('mobileLoginHelp');
+      
+      // 如果是移动设备且未登录，显示帮助提示
+      if (isMobileDevice() && !user) {
+        helpPanel.style.display = 'flex';
+      } else {
+        helpPanel.style.display = 'none';
+      }
+    }
+
+    async function refreshUI() {
+      console.log('正在刷新UI...');
+      const user = await waitForAuth();
+      
+      if (user) {
+        console.log('用戶已登入:', user);
+        userInfo.textContent = user.displayName || user.email || user.uid;
+        if (user.photoURL) { avatar.src = user.photoURL; avatar.style.display = 'block'; }
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-flex';
+        
+        // 檢查管理員權限
+        checkAdminAccess(user);
+        
+        // 檢查會員綁定狀態
+        console.log('正在檢查會員綁定狀態...');
+        checkMemberBinding(user.uid);
+        
+        fetchPoints(user.uid);
+      } else {
+        console.log('用戶未登入');
+        userInfo.textContent = '尚未登入';
+        avatar.style.display = 'none';
+        loginBtn.style.display = 'inline-flex';
+        logoutBtn.style.display = 'none';
+        pointsPill.style.display = 'none';
+        historyList.style.display = 'none';
+        emptyState.style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('memberBindingPanel').style.display = 'none';
+      }
+      
+      // 检查移动端登录问题
+      checkMobileLoginIssues(user);
+    }
+
+    async function fetchPoints(uid) {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=get_points&uid=${encodeURIComponent(uid)}&origin=${encodeURIComponent(window.location.origin)}&_=${Date.now()}`;
+        const res = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+        const text = await res.text();
+        let data = null; try { data = JSON.parse(text); } catch(_) { data = null; }
+        if (!data || !data.ok) throw new Error(data?.error || '查詢失敗');
+        totalPointsEl.textContent = data.totalPoints || 0;
+        pointsPill.style.display = 'inline-flex';
+        renderHistory(data.history || []);
+      } catch (e) {
+        console.warn('Fetch points failed:', e);
+        pointsPill.style.display = 'none';
+        emptyState.style.display = 'block';
+      }
+    }
+
+    function renderHistory(list) {
+      historyList.innerHTML = '';
+      if (!list.length) {
+        historyList.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+      historyList.style.display = 'block';
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div class="left">
+            <div class="title">入帳 +${item.points} 分</div>
+            <div class="desc">Session ${item.session_id} · ${formatTime(item.awarded_at)}</div>
+          </div>
+          <div class="points">HK$${Math.round(item.amount/100) || 0}</div>
+        `;
+        historyList.appendChild(div);
+      });
+    }
+
+    function formatTime(iso) {
+      try { const d = new Date(iso); return d.toLocaleString(); } catch(_) { return iso; }
+    }
+
+    function checkAdminAccess(user) {
+      // 管理員郵箱列表（請根據實際情況修改）
+      const adminEmails = [
+        'admin@cbon.shop',
+        'cbonshare@gmail.com',  // 請替換為實際管理員郵箱
+        'demo@example.com'      // 開發模式模擬用戶
+      ];
+      
+      console.log('檢查管理員權限:', {
+        userEmail: user.email,
+        userName: user.displayName,
+        uid: user.uid,
+        isDemo: user.isDemo,
+        adminEmails: adminEmails
+      });
+      
+      const isAdmin = adminEmails.includes(user.email);
+      console.log('管理員權限結果:', isAdmin);
+      
+      document.getElementById('adminPanel').style.display = isAdmin ? 'flex' : 'none';
+      
+      if (isAdmin) {
+        console.log('✅ 用戶具有管理員權限');
+      } else {
+        console.log('❌ 用戶沒有管理員權限，如需獲得權限請聯繫管理員');
+      }
+    }
+
+    // 會員號碼標準化函數
+    function normalizeMemberNumber(number) {
+      if (!number) return null;
+      const numStr = number.toString().replace(/\D/g, ''); // 移除非數字字元
+      if (numStr.length === 0) return null;
+      if (numStr.length <= 4) {
+        return numStr.padStart(4, '0'); // 前面補0
+      }
+      return numStr.slice(-4); // 取最後4位
+    }
+
+    // 檢查會員綁定狀態
+    async function checkMemberBinding(uid) {
+      const panel = document.getElementById('memberBindingPanel');
+      const status = document.getElementById('bindingStatus');
+      const form = document.getElementById('bindingForm');
+      const unbindSection = document.getElementById('unbindSection');
+      
+      // 首先顯示綁定面板
+      panel.style.display = 'flex';
+      
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=get_member_binding&uid=${encodeURIComponent(uid)}&origin=${encodeURIComponent(window.location.origin)}`;
+        console.log('檢查會員綁定狀態 API 調用:', url);
+        
+        const res = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+        const data = await res.json();
+        
+        console.log('綁定狀態 API 響應:', data);
+        
+        if (data.ok && data.bound) {
+          // 已綁定狀態
+          status.innerHTML = `<span class="status-bound"><i class="fas fa-check-circle"></i> 已綁定會員號碼：<span class="member-number">${data.member_number}</span></span>`;
+          form.style.display = 'none';
+          unbindSection.style.display = 'block';
+        } else {
+          // 未綁定狀態
+          status.innerHTML = `<span class="status-unbound"><i class="fas fa-info-circle"></i> 您可以綁定您的4位數會員號碼，以便同步歷史數據</span>`;
+          form.style.display = 'flex';
+          unbindSection.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('檢查綁定狀態失敗:', error);
+        // 即使API失敗，也顯示綁定界面
+        status.innerHTML = `<span class="status-unbound"><i class="fas fa-info-circle"></i> 您可以綁定您的4位數會員號碼，以便同步歷史數據</span>`;
+        form.style.display = 'flex';
+        unbindSection.style.display = 'none';
+      }
+    }
+
+    // 綁定會員號碼
+    async function bindMemberNumber(uid, memberNumber) {
+      try {
+        const normalizedNumber = normalizeMemberNumber(memberNumber);
+        if (!normalizedNumber) {
+          throw new Error('請輸入有效的4位數會員號碼');
+        }
+
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=${encodeURIComponent(uid)}&member_number=${normalizedNumber}&origin=${encodeURIComponent(window.location.origin)}`;
+        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const data = await res.json();
+        
+        if (data.ok) {
+          alert(`✅ 成功綁定會員號碼：${normalizedNumber}`);
+          checkMemberBinding(uid); // 重新檢查狀態
+          document.getElementById('memberNumberInput').value = '';
+        } else {
+          if (data.code === 'ALREADY_BOUND') {
+            const retry = confirm(`該會員號碼已被其他用戶綁定。\n\n是否強制綁定到您的帳戶？\n（這將解除該號碼與其他用戶的綁定）`);
+            if (retry) {
+              return bindMemberNumberForce(uid, normalizedNumber);
+            }
+          } else if (data.code === 'USER_ALREADY_BOUND') {
+            const retry = confirm(`您已綁定會員號碼：${data.current_number}\n\n是否要更換為新的會員號碼？`);
+            if (retry) {
+              return bindMemberNumberForce(uid, normalizedNumber);
+            }
+          } else {
+            throw new Error(data.error || '綁定失敗');
+          }
+        }
+      } catch (error) {
+        console.error('綁定失敗:', error);
+        alert(`❌ 綁定失敗：${error.message}`);
+      }
+    }
+
+    // 強制綁定會員號碼
+    async function bindMemberNumberForce(uid, memberNumber) {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=${encodeURIComponent(uid)}&member_number=${memberNumber}&force=true&origin=${encodeURIComponent(window.location.origin)}`;
+        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const data = await res.json();
+        
+        if (data.ok) {
+          alert(`✅ 成功綁定會員號碼：${memberNumber}`);
+          checkMemberBinding(uid);
+          document.getElementById('memberNumberInput').value = '';
+        } else {
+          throw new Error(data.error || '強制綁定失敗');
+        }
+      } catch (error) {
+        console.error('強制綁定失敗:', error);
+        alert(`❌ 強制綁定失敗：${error.message}`);
+      }
+    }
+
+    // 解除綁定
+    async function unbindMemberNumber(uid) {
+      if (!confirm('確定要解除會員號碼綁定嗎？')) return;
+      
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=unbind_member_number&uid=${encodeURIComponent(uid)}&origin=${encodeURIComponent(window.location.origin)}`;
+        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const data = await res.json();
+        
+        if (data.ok) {
+          alert('✅ 成功解除會員號碼綁定');
+          checkMemberBinding(uid);
+        } else {
+          throw new Error(data.error || '解除綁定失敗');
+        }
+      } catch (error) {
+        console.error('解除綁定失敗:', error);
+        alert(`❌ 解除綁定失敗：${error.message}`);
+      }
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      try { 
+        console.log('登入按鈕被點擊');
+        
+        // 如果是移動設備，提供額外的提示
+        if (isMobileDevice()) {
+          console.log('檢測到移動設備，使用針對性登錄方式');
+        }
+        
+        await signInWithGoogle();
+        
+        // 在開發模式下，手動觸發 UI 更新
+        setTimeout(() => {
+          refreshUI();
+        }, 200);
+        
+      } catch(e) { 
+        console.error('登入錯誤:', e);
+        
+        // 根據錯誤類型提供不同的提示
+        let errorMessage = '登入失敗，請稍後重試';
+        let showFixHelper = false;
+        
+        if (e.code === 'auth/popup-blocked') {
+          errorMessage = '彈窗被阻止，請允許彈窗或使用修復助手';
+          showFixHelper = true;
+        } else if (e.code === 'auth/operation-not-supported-in-this-environment') {
+          errorMessage = '當前環境不支援彈窗登錄，將自動使用重定向登錄';
+        } else if (e.code === 'auth/popup-closed-by-user') {
+          errorMessage = '登錄窗口被關閉，請再試一次';
+        } else if (e.message && e.message.includes('network')) {
+          errorMessage = '網路連接問題，請檢查網路後重試';
+        }
+        
+        // 如果是移動設備且遇到關鍵錯誤，顯示修復助手
+        if (isMobileDevice() && (showFixHelper || e.code === 'auth/popup-blocked')) {
+          const showHelper = confirm(`${errorMessage}\n\n是否打開手機登錄修復助手？`);
+          if (showHelper) {
+            window.open('mobile-login-fix.html', '_blank');
+          }
+        } else {
+          alert(errorMessage);
+        }
+      }
+    });
+    logoutBtn.addEventListener('click', async () => {
+      try { await signOutUser(); } catch(e) { alert('登出失敗，請稍後重試'); }
+    });
+    
+    // 管理員功能按鈕
+    document.getElementById('adminBtn').addEventListener('click', () => {
+      window.location.href = 'member-integration.html';
+    });
+
+    // 會員號碼綁定事件
+    document.getElementById('bindBtn').addEventListener('click', async () => {
+      const user = await waitForAuth();
+      if (!user) {
+        alert('請先登入');
+        return;
+      }
+      
+      const memberNumber = document.getElementById('memberNumberInput').value.trim();
+      if (!memberNumber) {
+        alert('請輸入4位數會員號碼');
+        return;
+      }
+      
+      await bindMemberNumber(user.uid, memberNumber);
+    });
+
+    // 解除綁定事件
+    document.getElementById('unbindBtn').addEventListener('click', async () => {
+      const user = await waitForAuth();
+      if (!user) {
+        alert('請先登入');
+        return;
+      }
+      
+      await unbindMemberNumber(user.uid);
+    });
+
+    // 輸入框事件 - 按 Enter 鍵綁定
+    document.getElementById('memberNumberInput').addEventListener('keypress', async (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('bindBtn').click();
+      }
+    });
+
+    // 輸入框事件 - 只允許數字輸入
+    document.getElementById('memberNumberInput').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+    });
+
+    // iOS/Safari：監聽登入狀態變化（例如 Google Redirect 回來後），自動刷新 UI
+    onAuthStateChanged(auth, () => {
+      console.log('Auth state changed, refreshing UI');
+      refreshUI();
+    });
+
+    refreshUI();
+  </script>
+  
+  <!-- 底部導航（與全站一致） -->
+  <nav class="bottom-nav-mobile">
+    <a href="https://cbon.shop.sn.cn/#/index" class="nav-btn eshop">
+      <i class="fas fa-shopping-cart"></i>
+      <span>EShop</span>
+    </a>
+    <a href="codes.html" class="nav-btn topup">
+      <i class="fas fa-credit-card"></i>
+      <span>Code</span>
+    </a>
+    <a href="ai-chat.html" class="nav-btn ai">
+      <i class="fas fa-robot"></i>
+      <span>AI</span>
+    </a>
+    <a href="/speedtest.html" class="nav-btn" style="background:#0ea5e9;color:#0b1220;">
+      <i class="fas fa-gauge"></i>
+      <span>Speed</span>
+    </a>
+    <a href="account.html" class="nav-btn account active">
+      <i class="fas fa-user"></i>
+      <span>會員</span>
+    </a>
+  </nav>
+</body>
+</html>

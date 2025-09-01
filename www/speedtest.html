@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>HKSIM SpeedTest Web</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.svg">
+  <link rel="stylesheet" href="./style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Minimal, mobile-first UI for the speed test app */
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:#0b1220; color:#e5e7eb; }
+    .app { max-width: 720px; margin: 0 auto; padding: 16px 16px 88px; }
+    .app header { display:flex; align-items:center; gap:10px; padding:12px 0; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; background:#111827; border:1px solid #1f2937; color:#9ca3af; font-size:12px; }
+    .card { background:linear-gradient(180deg, #0d172a, #0b1220); border:1px solid #1f2937; border-radius:14px; padding:16px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+    .primary-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; height:54px; border-radius:12px; background: linear-gradient(135deg,#ff6b35 0%, #ff8c42 50%, #ffa726 100%); color:#fff; font-weight:800; font-size:18px; border:none; box-shadow: 0 8px 24px rgba(255,107,53,0.35); }
+    .primary-btn:active { transform: translateY(1px); }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1 1 0; }
+    select, input[type="text"], input[type="number"] { width:100%; height:44px; border-radius:10px; border:1px solid #1f2937; background:#0b1220; color:#e5e7eb; padding:0 10px; }
+    label { font-size:12px; color:#9ca3af; display:block; margin-bottom:6px; }
+    .section-title { font-size:14px; color:#9ca3af; margin:10px 0 6px; }
+    iframe { width:100%; height:380px; border:0; border-radius:12px; background:#0b1220; }
+    .metrics { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
+    .metric { background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center; }
+    .metric .val { font-size:22px; font-weight:800; color:#e2f3ff; }
+    .metric .unit { font-size:12px; color:#93c5fd; }
+    .bars { display:flex; gap:12px; align-items:flex-end; height:120px; padding:12px; border-radius:12px; background:#0b1220; border:1px solid #1f2937; }
+    .bar { width:20%; background:linear-gradient(180deg,#22c55e,#065f46); border-radius:8px 8px 0 0; display:flex; align-items:flex-end; justify-content:center; color:#e5e7eb; font-size:12px; padding-bottom:6px; }
+    .bar.red { background:linear-gradient(180deg,#ef4444,#7f1d1d); }
+    .muted { color:#94a3b8; font-size:12px; }
+    .footer-nav { position:fixed; left:0; right:0; bottom:0; backdrop-filter: blur(12px); background:rgba(2,6,23,0.6); border-top:1px solid #1f2937; padding:10px; }
+    .footer-nav .grid { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; }
+    .ghost { background:transparent; border:1px solid #1f2937; color:#cbd5e1; border-radius:10px; height:44px; }
+    .success { color:#22c55e; font-size:12px; }
+    .warn { color:#fbbf24; font-size:12px; }
+  </style>
+  <!-- React & Babel (no build step) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+  <!-- Expose Firebase API (reusing existing config) -->
+  <script type="module">
+    import * as F from './firebase-config.js';
+    window.FirebaseAPI = F;
+  </script>
+</head>
+<body>
+  <header class="mobile-header">
+    <div class="logo-area">
+      <a href="https://c----b.web.app/"><img src="./cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+      <h1>CBON</h1>
+      <p>手機充值之家 · SpeedTest</p>
+    </div>
+  </header>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react" data-plugins="proposal-optional-chaining,proposal-nullish-coalescing-operator">
+    const { useState, useEffect, useMemo } = React;
+
+    function regionFromLatLng(lat, lng){
+      if(lat == null || lng == null) return null;
+      // Very rough mapping just for demo
+      // HK Island approx box
+      const isIsland = lat>=22.23 && lat<=22.33 && lng>=114.12 && lng<=114.22;
+      const isKowloon = lat>=22.28 && lat<=22.36 && lng>=114.15 && lng<=114.21;
+      if(isIsland) return '香港島';
+      if(isKowloon) return '九龍';
+      return '新界/其他';
+    }
+
+    function nowISO(){ return new Date().toISOString(); }
+
+    function useGeo(){
+      const [pos,setPos] = useState({lat:null,lng:null,region:null,err:null});
+      const ask = () => {
+        if(!('geolocation' in navigator)){
+          setPos(p=>({...p, err:'此裝置不支援定位'}));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (r)=>{
+            const lat = r.coords.latitude, lng = r.coords.longitude;
+            setPos({lat,lng,region:regionFromLatLng(lat,lng),err:null});
+          },
+          (e)=> setPos(p=>({...p, err:e.message||'定位失敗'})),
+          { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+        );
+      };
+      return { ...pos, ask };
+    }
+
+    function MetricInput({label, unit, value, onChange, placeholder}){
+      return (
+        <div>
+          <label>{label}（{unit}）</label>
+          <input type="number" inputMode="decimal" step="0.01" value={value ?? ''} onChange={e=>onChange(parseFloat(e.target.value)||'')} placeholder={placeholder||'0'} />
+        </div>
+      );
+    }
+
+    function App(){
+      const [view,setView] = useState('home');
+      const [sim,setSim] = useState(''); // 先不預設，需使用者選擇
+      const [metrics,setMetrics] = useState({ download:null, upload:null, ping:null });
+      const [saving,setSaving] = useState(false);
+      const [savedId,setSavedId] = useState(null);
+      const [ts] = useState(()=> nowISO());
+      const geo = useGeo();
+      const [carrier, setCarrier] = useState('');
+      const [networkType, setNetworkType] = useState('');
+
+      // Handle share link open (?id=...)
+      useEffect(()=>{
+        const params = new URLSearchParams(location.search);
+        const id = params.get('id');
+        if(id){
+          (async()=>{
+            try{
+              const F = window.FirebaseAPI;
+              if(!F) throw new Error('Firebase 未載入');
+              const snap = await F.getDoc(F.doc(F.db,'speedtests',id));
+              if(snap.exists()){
+                const data = snap.data();
+                setMetrics({ download:data.download ?? null, upload:data.upload ?? null, ping:data.ping ?? null });
+                setSim(data.simType||'');
+                setNetworkType(data.networkType||'');
+                setView('result');
+              }
+            }catch(e){ console.warn('讀取分享結果失敗', e); }
+          })();
+        }
+      },[]);
+
+      useEffect(() => {
+        // Auto-detect carrier and SIM type using MCC/MNC mapping
+        const detectCarrierAndSim = async () => {
+          if (window.plugins && window.plugins.sim) {
+            window.plugins.sim.getSimInfo(
+              (result) => {
+                console.log('SIM Info:', result);
+                const carrierName = result.carrierName || '';
+                const mcc = (result.mcc != null ? String(result.mcc) : '');
+                let mnc = (result.mnc != null ? String(result.mnc) : '');
+                if (mnc.length === 1) mnc = mnc.padStart(2, '0');
+                
+                setCarrier(carrierName);
+                
+                // MCC/MNC based SIM type detection for Hong Kong
+                if (mcc === '454') {
+                  if (mnc === '00' || mnc === '02') {
+                    setSim('CSL');
+                  } else if (mnc === '03' || mnc === '04' || mnc === '05') {
+                    setSim('3HK');
+                  } else if (mnc === '06') {
+                    setSim('SmarTone');
+                  } else if (mnc === '12' || mnc === '13') {
+                    setSim('CMHK');
+                  }
+                }
+                
+                // Fallback to carrier name matching
+                if (!sim) {
+                  const carrierLower = carrierName.toLowerCase();
+                  if (carrierLower.includes('3hk') || carrierLower.includes('hutchison') || carrierLower.includes('three')) {
+                    setSim('3HK');
+                  } else if (carrierLower.includes('csl')) {
+                    setSim('CSL');
+                  } else if (carrierLower.includes('cmhk') || carrierLower.includes('china mobile')) {
+                    setSim('CMHK');
+                  } else if (carrierLower.includes('smartone') || carrierLower.includes('數碼通')) {
+                    setSim('SmarTone');
+                  }
+                }
+              },
+              (err) => console.error('Unable to get SIM info', err)
+            );
+          }
+        };
+
+        // Enhanced network detection with Cordova Network Information
+        const detectNetwork = async () => {
+          let detectedType = '';
+          
+          // Try Cordova Network Information plugin first (more accurate for mobile)
+          try {
+            if (window.Connection && navigator.connection) {
+              const connection = navigator.connection;
+              const type = connection.type;
+              const effectiveType = connection.effectiveType;
+              
+              console.log('Network Info:', { type, effectiveType });
+              
+              // Map connection types to readable format
+              if (type === Connection.CELL_5G || effectiveType === '5g') {
+                detectedType = '5G';
+              } else if (type === Connection.CELL_4G || effectiveType === '4g') {
+                detectedType = '4G';
+              } else if (type === Connection.CELL_3G || effectiveType === '3g') {
+                detectedType = '3G';
+              } else if (type === Connection.CELL_2G || effectiveType === '2g') {
+                detectedType = '2G';
+              } else if (type === Connection.WIFI || type === Connection.ETHERNET) {
+                detectedType = 'WiFi';
+              } else if (effectiveType) {
+                detectedType = effectiveType.toUpperCase();
+              }
+            }
+          } catch (e) {
+            console.log('Cordova Network Information not available:', e);
+          }
+          
+          // Fallback to Capacitor Network API
+          if (!detectedType) {
+            try {
+              if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() !== 'web') {
+                const { Network } = await import('@capacitor/network');
+                const status = await Network.getStatus();
+              } else {
+                // Web environment: skip Capacitor import, will fallback to browser APIs
+              }
+              console.log('Capacitor Network Status:', status);
+              
+              if (status.connectionType === 'cellular') {
+                // Try to get more specific info from browser APIs
+                if (navigator.connection && navigator.connection.effectiveType) {
+                  const effectiveType = navigator.connection.effectiveType;
+                  detectedType = effectiveType === '4g' ? '4G' : effectiveType === '3g' ? '3G' : '行動網路';
+                } else {
+                  detectedType = '行動網路';
+                }
+              } else if (status.connectionType === 'wifi') {
+                detectedType = 'WiFi';
+              } else {
+                detectedType = status.connectionType || '未知';
+              }
+            } catch (e) {
+              console.error('Failed to get network status', e);
+            }
+          }
+          
+          // Final fallback to basic browser API
+          if (!detectedType && navigator.connection) {
+            const conn = navigator.connection;
+            if (conn.effectiveType) {
+              detectedType = conn.effectiveType === '4g' ? '4G' : 
+                           conn.effectiveType === '3g' ? '3G' : 
+                           conn.effectiveType === '2g' ? '2G' : conn.effectiveType;
+            }
+          }
+          
+          if (detectedType) {
+            setNetworkType(detectedType);
+          }
+        };
+        
+        detectCarrierAndSim();
+        detectNetwork();
+      }, []);
+
+      const start = ()=>{
+        if(!sim){ alert('請先選擇 SIM 類型'); return; }
+        if(!geo.lat) geo.ask();
+        setView('test');
+      };
+
+      const saveToFirebase = async ()=>{
+         if(metrics.download==null || metrics.ping==null || metrics.upload==null){
+           alert('請先填寫完整的三項數據：下載、Ping、上載');
+           return;
+         }
+         try{
+           setSaving(true);
+           const F = window.FirebaseAPI;
+           const { addDoc, collection } = F;
+           const uid = 'anonymous'; // SpeedTest 無需登入，匿名保存
+           const provider = 'CBON-API';
+           const docRef = await addDoc(collection(F.db,'speedtests'), {
+             simType: sim,
+             download: metrics.download,
+             upload: metrics.upload,
+             ping: metrics.ping,
+             lat: geo.lat ?? null,
+             lng: geo.lng ?? null,
+             region: geo.region ?? null,
+             networkType: networkType,
+             carrier: carrier,
+             ts,
+             uid,
+             provider,
+             ua: (navigator?.userAgent)||''
+           });
+           setSavedId(docRef.id);
+           setView('result');
+         }catch(e){ alert('保存失敗，請稍後再試'); console.error(e); }
+         finally{ setSaving(false); }
+       };
+
+      const share = async ()=>{
+        const url = savedId ? `${location.origin}${location.pathname}?id=${savedId}` : location.href;
+        try{
+          await navigator.clipboard.writeText(url);
+          alert('分享連結已複製到剪貼簿');
+        }catch(_){ prompt('複製以下連結分享：', url); }
+      };
+
+      const onMetric = (k,v)=> setMetrics(m=>({...m, [k]: v}));
+
+      return (
+        <div className="app">
+          {view==='home' && (
+            <div className="card">
+              <div className="section-title">選擇 SIM 類型</div>
+              <div className="row">
+                <select value={sim} onChange={e=>setSim(e.target.value)}>
+                  <option value="">請選擇 SIM 類型</option>
+                  <option value="HKSIM">HKSIM</option>
+                  <option value="3HK">3HK</option>
+                  <option value="CMHK">CMHK</option>
+                  <option value="CSL">CSL</option>
+                  <option value="SmarTone">數碼通 (SmarTone)</option>
+                </select>
+              </div>
+              <div className="muted">自動偵測運營商：{carrier || '未偵測'}</div>
+              <div className="section-title">網絡類型</div>
+              <div className="row">
+                <select value={networkType} onChange={e=>setNetworkType(e.target.value)}>
+                  <option value="">請選擇網絡類型</option>
+                  <option value="4G">4G</option>
+                  <option value="5G">5G</option>
+                  <option value="WiFi">WiFi</option>
+                  <option value="Other">其他</option>
+                </select>
+              </div>
+              <div className="muted">自動偵測：{networkType || '未偵測'}</div>
+              <div style={{height:12}} />
+              <button className="primary-btn" onClick={start} disabled={!sim}>一鍵測速</button>
+              <div style={{height:8}} />
+              <div className="row">
+                <a href="/speedtest-records.html" className="ghost" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',textDecoration:'none'}}>
+                  <i className="fas fa-clock"></i>
+                  <span style={{marginLeft:6}}>查看最近紀錄</span>
+                </a>
+              </div>
+              <div style={{height:8}} />
+              <div className="muted">提示：首次測試會請求定位權限（用於區域統計）。</div>
+            </div>
+          )}
+
+          {view==='test' && (
+            <div className="card">
+              <div className="section-title">自家 API 測速</div>
+              <div className="muted">即將自動測試 Ping／下載／上載，完成後會自動填入三項數據；如需微調可手動修改。</div>
+              <div style={{height:8}} />
+              <div style={{height:12}} />
+              <div className="metrics">
+                <MetricInput label="下載" unit="Mbps" value={metrics.download} onChange={v=>onMetric('download',v)} />
+                <MetricInput label="Ping" unit="ms" value={metrics.ping} onChange={v=>onMetric('ping',v)} />
+                <MetricInput label="上載" unit="Mbps" value={metrics.upload} onChange={v=>onMetric('upload',v)} />
+              </div>
+              <div style={{height:12}} />
+              <div className="row">
+                <button className="primary-btn" disabled={saving} onClick={saveToFirebase}>{saving? '保存中...' : '保存結果'}</button>
+                <button className="ghost" onClick={()=>setView('home')}>返回</button>
+              </div>
+              <div style={{marginTop:8}} className="muted">
+                位置：{geo.region? geo.region : '未獲取'} {geo.err? <span className="warn">({geo.err})</span>: null}
+              </div>
+            </div>
+          )}
+
+          {view==='result' && (
+            <div className="card">
+              <div className="section-title">測速結果</div>
+              <div className="metrics">
+                <div className="metric"><div className="val">{metrics.download ?? '-'}<span className="unit"> Mbps</span></div><div className="muted">下載</div></div>
+                <div className="metric"><div className="val">{metrics.ping ?? '-'}<span className="unit"> ms</span></div><div className="muted">Ping</div></div>
+                <div className="metric"><div className="val">{metrics.upload ?? '-'}<span className="unit"> Mbps</span></div><div className="muted">上載</div></div>
+              </div>
+              <div style={{height:12}} />
+              <div className="row">
+                <button className="primary-btn" onClick={share}>複製分享連結</button>
+                <button className="ghost" onClick={()=>{ setSavedId(null); setView('home'); }}>再測一次</button>
+                <a href="/speedtest-records.html" className="ghost" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',textDecoration:'none'}}>
+                  <i className="fas fa-clock"></i>
+                  <span style={{marginLeft:6}}>查看最近紀錄</span>
+                </a>
+              </div>
+              <div style={{marginTop:8}} className="muted">SIM：{sim}｜時間：{new Date(ts).toLocaleString()}｜位置：{geo.region||'-'}</div>
+            </div>
+          )}
+
+          <nav className="bottom-nav-mobile">
+            <a href="https://cbon.shop.sn.cn/#/index" className="nav-btn eshop">
+              <i className="fas fa-shopping-cart"></i>
+              <span>EShop</span>
+            </a>
+            <a href="/codes.html" className="nav-btn topup">
+              <i className="fas fa-credit-card"></i>
+              <span>Code</span>
+            </a>
+            <a href="/ai-chat.html" className="nav-btn ai">
+              <i className="fas fa-robot"></i>
+              <span>AI</span>
+            </a>
+            <a href="/speedtest.html" className="nav-btn" style={{background:'#0ea5e9',color:'#0b1220'}}>
+              <i className="fas fa-gauge"></i>
+              <span>Speed</span>
+            </a>
+            <a href="/account.html" className="nav-btn account">
+              <i className="fas fa-user"></i>
+              <span>會員</span>
+            </a>
+          </nav>
+        </div>
+      );
+    }
+
+    (function(){
+      const rootEl = document.getElementById('root');
+      if(window.ReactDOMClient && ReactDOMClient.createRoot){
+        ReactDOMClient.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.createRoot){
+        ReactDOM.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.render){
+        ReactDOM.render(<App />, rootEl);
+      } else {
+        rootEl.textContent = 'React 尚未載入，請刷新頁面。';
+      }
+    })();
+
+    // Register Service Worker for PWA
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      });
+    }
+  </script>
+
+  <script>
+    // iOS add to home screen hints can be added later if needed
+    window.addEventListener('error', function(e){
+      const el = document.getElementById('root');
+      if(el && !el.innerText){
+        el.style.padding = '16px';
+        el.style.fontFamily = 'monospace';
+        el.innerText = '發生錯誤：' + (e.message || '未知錯誤');
+      }
+    });
+  </script>
+</body>
+</html>

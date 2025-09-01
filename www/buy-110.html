@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>立即購買 - CBON</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="mobile-app">
+    <!-- 頂部 Logo 區 -->
+    <header class="mobile-header">
+      <a href="index.html" class="back-btn-mobile">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div class="logo-area">
+        <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+        <h1>立即購買</h1>
+        <p>充值碼即買即派</p>
+      </div>
+    </header>
+
+    <!-- 購買內容區 -->
+    <main class="buy-section">
+      <div class="purchase-card">
+        <div class="purchase-header">
+          <div class="security-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span>Stripe 安全付款</span>
+          </div>
+          <h2>國際萬能卡 $82 充值碼</h2>
+        </div>
+
+        <div class="purchase-action">
+          <button id="buyButton" class="buy-btn-main">
+            <i class="fas fa-bolt"></i>
+            <span>購買充值碼 HK$82</span>
+            <div class="btn-glow"></div>
+          </button>
+        </div>
+
+        <div id="statusMessage" class="status-message" style="display:none;">
+          <div class="status-icon">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <p>目前暫無可用充值碼，請稍後再試或聯繫客服</p>
+        </div>
+
+        <div class="purchase-tips">
+          <div class="tip-item">
+            <i class="fas fa-info-circle"></i>
+            <span>付款後未自動跳轉？我們會人工核對後補發充值碼</span>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-headset"></i>
+            <span>需要協助？透過首頁的 Telegram 或 WhatsApp 聯繫我們</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav-mobile">
+      <a href="https://cbon.shop.sn.cn/#/index" class="nav-btn eshop">
+        <i class="fas fa-shopping-cart"></i>
+        <span>EShop</span>
+      </a>
+      <a href="codes.html" class="nav-btn topup active">
+        <i class="fas fa-credit-card"></i>
+        <span>Code</span>
+      </a>
+      <a href="ai-chat.html" class="nav-btn ai">
+        <i class="fas fa-robot"></i>
+        <span>AI</span>
+      </a>
+      <a href="account.html" class="nav-btn account">
+        <i class="fas fa-user"></i>
+        <span>會員</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- 庫存狀態彈窗 -->
+  <div id="stockModal" class="stock-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📊 實時庫存狀態</h3>
+        <button id="closeModal" class="close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="stock-display">
+          <div class="stock-icon">
+            <i class="fas fa-box"></i>
+          </div>
+          <div class="stock-info">
+            <span class="stock-label">可用充值碼</span>
+            <span id="stockCount" class="stock-number">檢查中...</span>
+          </div>
+        </div>
+        
+        <div class="points-preview">
+          <div class="points-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="points-info">
+            <span class="points-label">購買後將獲得</span>
+            <span id="pointsPreview" class="points-number">82 分</span>
+          </div>
+        </div>
+        
+        <div class="stock-timestamp">
+          <i class="fas fa-clock"></i>
+          <span id="updateTime">載入中...</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="refreshStock" class="refresh-btn">
+          <i class="fas fa-sync-alt"></i>
+          <span>重新整理</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* 庫存彈窗樣式 */
+    .stock-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stock-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+
+    .stock-modal.show .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 20px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #333;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2em;
+      color: #666;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .stock-display {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .stock-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    .stock-info {
+      flex: 1;
+    }
+
+    .stock-label {
+      display: block;
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .stock-number {
+      display: block;
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stock-number.loading {
+      color: #999;
+      font-size: 1.2em;
+    }
+
+    .stock-number.available {
+      color: #28a745;
+    }
+
+    .stock-number.out-of-stock {
+      color: #dc3545;
+    }
+
+    .stock-timestamp {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8em;
+      color: #999;
+      margin-bottom: 15px;
+    }
+
+    .points-preview {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 8px 0 12px;
+      padding: 10px 12px;
+      background: #fff6e5;
+      border: 1px dashed #f59e0b;
+      border-radius: 10px;
+    }
+    .points-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .points-icon i { font-size: 1.1em; }
+    .points-info { flex: 1; }
+    .points-label { display:block; font-size: 0.9em; color:#b45309; margin-bottom:4px; }
+    .points-number { font-size: 1.2em; font-weight: 800; color:#92400e; }
+
+    .modal-actions {
+      padding: 0 20px 20px;
+    }
+
+    .refresh-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .refresh-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .refresh-btn.loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+    const buyButton = document.getElementById('buyButton');
+    const statusMessage = document.getElementById('statusMessage');
+    const stockModal = document.getElementById('stockModal');
+    const stockCount = document.getElementById('stockCount');
+    const updateTime = document.getElementById('updateTime');
+    const closeModal = document.getElementById('closeModal');
+    const refreshStock = document.getElementById('refreshStock');
+    const pointsPreview = document.getElementById('pointsPreview');
+
+    // 兼容舊版：避免未移除的 showStatus 調用報錯
+    if (typeof window.showStatus !== 'function') {
+      window.showStatus = function () {};
+    }
+
+    // 國際萬能卡 $110 產品配置
+    const STRIPE_URL = 'https://buy.stripe.com/dRmdR9a9D291gVGgqAdwc04'; // 已更新為實際的 Stripe Checkout URL
+    // const APPS_SCRIPT_ENDPOINT = localStorage.getItem('CBON_APPS_SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbwhdaWJHQV9sEbcNUP9bQmjjxYTk0HdNif_QKEqunp6fQfyufGiax14l2H36kpBssvyPQ/exec';
+    const PRODUCT_PRICE_HKD = 82; // 港幣 82 元
+    
+    function updatePointsPreview() {
+      const points = Math.round(PRODUCT_PRICE_HKD);
+      pointsPreview.textContent = `${points} 分`;
+    }
+
+    // 顯示庫存彈窗
+    function showStockModal() {
+      stockModal.classList.add('show');
+      updatePointsPreview();
+      checkStockForModal();
+    }
+
+    // 隱藏庫存彈窗
+    function hideStockModal() {
+      stockModal.classList.remove('show');
+    }
+
+    // 檢查庫存（彈窗用）
+    async function checkStockForModal() {
+    stockCount.textContent = '檢查中...';
+    stockCount.className = 'stock-number loading';
+    updateTime.textContent = '更新中...';
+    try {
+    const resp = await fetch(`/api/stock?productId=110&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+    const data = await resp.json();
+    const count = Number(data && data.count);
+    stockCount.textContent = isNaN(count) ? '—' : `${count} 組`;
+    if (!isNaN(count)) {
+    stockCount.className = count > 0 ? 'stock-number available' : 'stock-number out-of-stock';
+    } else {
+    stockCount.className = 'stock-number';
+    }
+    updateTime.textContent = `更新時間：${new Date().toLocaleString()}`;
+    } catch (err) {
+    console.error('[Stock Modal] fetch failed:', err);
+    stockCount.textContent = '錯誤';
+    stockCount.className = 'stock-number';
+    updateTime.textContent = '取得失敗';
+    }
+    }
+
+    // 事件監聽
+    closeModal.addEventListener('click', hideStockModal);
+    stockModal.addEventListener('click', (e) => {
+      if (e.target === stockModal) hideStockModal();
+    });
+
+    refreshStock.addEventListener('click', async () => {
+      refreshStock.classList.add('loading');
+      await checkStockForModal();
+      refreshStock.classList.remove('loading');
+    });
+
+    // 購買按鈕邏輯
+    buyButton.addEventListener('click', async () => {
+      // 先顯示庫存彈窗
+      showStockModal();
+
+      buyButton.classList.add('loading');
+      buyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>檢查中...</span>';
+
+      try {
+        const resp = await fetch(`/api/stock?productId=110&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const data = await resp.json();
+        console.log('Stock check response:', data);
+
+        const available = data && (data.available === true || Number(data.count) > 0);
+        if (available) {
+          buyButton.innerHTML = '<i class="fas fa-check"></i><span>建立訂單...</span>';
+          try {
+            const r2 = await fetch('/api/create_checkout_session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId: '110', quantity: 1 })
+            });
+            const s = await r2.json();
+            if (s && s.ok && s.url) {
+              try { localStorage.setItem('CBON_LAST_PRODUCT_ID', '110'); } catch (_) {}
+              window.location.href = s.url;
+              return;
+            }
+            throw new Error((s && s.error) || '建立訂單失敗');
+          } catch (e) {
+            console.error('Create session failed:', e);
+            buyButton.classList.remove('loading');
+            buyButton.innerHTML = '<i class=\"fas fa-exclamation-triangle\"></i><span>下單失敗，重試</span>';
+            return;
+          }
+        } else {
+          statusMessage.style.display = 'block';
+          buyButton.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('檢查庫存失敗:', err);
+        buyButton.classList.remove('loading');
+        buyButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>檢查失敗，點擊重試</span>';
+      }
+    });
+  </script>
+</body>
+</html>

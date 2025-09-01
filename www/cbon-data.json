@@ -1,0 +1,50 @@
+{
+  "store_info": {
+    "name": "施幫CBon",
+    "address": "香港旺角亞皆老街83號先達廣場1樓F88舖",
+    "business_hours": {
+      "weekday": "星期一至六（13:30-19:30）",
+      "sunday": "星期日及公眾假期（13:00-18:00）"
+    },
+    "payment_methods": ["現金", "八達通", "WeChat pay", "Alipay", "轉數快"]
+  },
+  "products": {
+    "hkmobile_annual_card": {
+      "name": "香港移動年卡",
+      "price": 88,
+      "original_price": 248,
+      "features": ["香港100GB數據", "2000分鐘通話", "有效期60日"]
+    },
+    "hkmobile_data_plan": {
+      "name": "HK Mobile數據計劃",
+      "price": 59,
+      "features": ["100GB@42Mbps", "其後512kbps", "2000分鐘本地通話", "21Mbps午夜快線"]
+    }
+  },
+  "membership": {
+    "card_price": 9,
+    "validity_period": "30日",
+    "renewal_price": 5,
+    "benefits": "VIP購買本地電話卡優惠"
+  },
+  "delivery_options": {
+    "self_pickup": {
+      "location": "旺角自提點 - 先達廣場1樓F88",
+      "weekday_hours": "星期一至六（13:30-19:30）",
+      "sunday_hours": "星期日及公眾假期（13:00-18:00）"
+    },
+    "sf_express": "順豐到付",
+    "easy_pickup": {
+      "price": 15,
+      "description": "易寄取$15（1張-15張內）可跟踪郵件"
+    },
+    "regular_mail": {
+      "price": 3,
+      "description": "平郵每張$3（不保平郵寄失風險）"
+    },
+    "mtr_pickup": {
+      "location": "旺角地鐵D閘口",
+      "requirement": "需3個小時前預約"
+    }
+  }
+}

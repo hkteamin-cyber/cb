@@ -1,0 +1,12 @@
+{
+  "name": "HKSIM SpeedTest Web",
+  "short_name": "HKSIM Test",
+  "start_url": "/speedtest.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    { "src": "/images/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/images/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock API 測試 - CBON</title>
+  <style>
+    body { 
+      background: #0f1115; 
+      color: #fff; 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card { 
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.12); 
+      border-radius: 16px; 
+      padding: 20px; 
+      margin: 20px 0;
+    }
+    .btn { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      padding: 12px 20px; 
+      border-radius: 10px; 
+      border: none; 
+      background: linear-gradient(135deg,#4285F4,#34A853); 
+      color: white; 
+      cursor: pointer; 
+      font-weight: 600;
+      margin: 5px;
+    }
+    .success { background: rgba(34,197,94,0.2); color: #22c55e; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .error { background: rgba(239,68,68,0.2); color: #ef4444; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .info { background: rgba(59,130,246,0.2); color: #3b82f6; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .code { 
+      background: rgba(0,0,0,0.3); 
+      padding: 10px; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 12px; 
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Mock API 功能測試</h1>
+  
+  <div class="card">
+    <h3>API 狀態檢查</h3>
+    <button id="healthBtn" class="btn">🔍 檢查健康狀態</button>
+    <button id="statusBtn" class="btn">📊 查看Mock狀態</button>
+    <div id="healthResult"></div>
+  </div>
+  
+  <div class="card">
+    <h3>會員號碼綁定測試</h3>
+    
+    <div>
+      <h4>測試用戶: demo-user-12345</h4>
+      <button id="checkBindingBtn" class="btn">📋 檢查綁定狀態</button>
+      <button id="bindBtn" class="btn">🔗 綁定號碼 0001</button>
+      <button id="bindConflictBtn" class="btn">⚠️ 測試衝突綁定</button>
+      <button id="unbindBtn" class="btn">🔓 解除綁定</button>
+    </div>
+    
+    <div id="bindingResult"></div>
+  </div>
+  
+  <div class="card">
+    <h3>會員查找測試</h3>
+    <button id="findBtn" class="btn">🔍 查找會員 0001</button>
+    <button id="findNotExistBtn" class="btn">❓ 查找不存在的會員</button>
+    <div id="findResult"></div>
+  </div>
+  
+  <div class="card">
+    <h3>完整流程測試</h3>
+    <button id="fullTestBtn" class="btn">🚀 運行完整測試</button>
+    <div id="fullTestResult"></div>
+  </div>
+
+  <script type="module">
+    // 載入模擬API
+    await import('./js/mock-api.js');
+    
+    const APPS_SCRIPT_ENDPOINT = 'https://script.google.com/macros/s/test';
+    
+    function showResult(elementId, content, type = 'info') {
+      const element = document.getElementById(elementId);
+      element.innerHTML = `<div class="${type}">${content}</div>`;
+    }
+    
+    function showCode(elementId, data) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = `<div class="code">${JSON.stringify(data, null, 2)}</div>`;
+    }
+
+    // 健康檢查
+    document.getElementById('healthBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=health&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          showResult('healthResult', '✅ API 服務正常運行', 'success');
+          showCode('healthResult', data);
+        } else {
+          showResult('healthResult', '❌ API 服務異常', 'error');
+          showCode('healthResult', data);
+        }
+      } catch (error) {
+        showResult('healthResult', `❌ 連接失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 查看Mock狀態
+    document.getElementById('statusBtn').addEventListener('click', () => {
+      if (window.mockAPI) {
+        const status = window.mockAPI.getStatus();
+        showResult('healthResult', '📊 Mock API 狀態', 'info');
+        showCode('healthResult', status);
+      } else {
+        showResult('healthResult', '❌ Mock API 未載入', 'error');
+      }
+    });
+
+    // 檢查綁定狀態
+    document.getElementById('checkBindingBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=get_member_binding&uid=demo-user-12345&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          if (data.bound) {
+            showResult('bindingResult', `✅ 已綁定會員號碼: ${data.member_number}`, 'success');
+          } else {
+            showResult('bindingResult', '📋 未綁定會員號碼', 'info');
+          }
+          showCode('bindingResult', data);
+        } else {
+          showResult('bindingResult', '❌ 檢查失敗', 'error');
+          showCode('bindingResult', data);
+        }
+      } catch (error) {
+        showResult('bindingResult', `❌ 檢查失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 綁定會員號碼
+    document.getElementById('bindBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=demo-user-12345&member_number=0001&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          showResult('bindingResult', `✅ 綁定成功: ${data.member_number}`, 'success');
+        } else {
+          showResult('bindingResult', `❌ 綁定失敗: ${data.error}`, 'error');
+        }
+        showCode('bindingResult', data);
+      } catch (error) {
+        showResult('bindingResult', `❌ 綁定失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 測試衝突綁定
+    document.getElementById('bindConflictBtn').addEventListener('click', async () => {
+      try {
+        // 先綁定一個號碼給另一個用戶
+        await fetch(`${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=another-user&member_number=0002&origin=${window.location.origin}`);
+        
+        // 然後嘗試用demo用戶綁定同一個號碼
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=demo-user-12345&member_number=0002&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          showResult('bindingResult', '❌ 應該失敗但成功了', 'error');
+        } else {
+          showResult('bindingResult', `✅ 正確檢測到衝突: ${data.code}`, 'success');
+        }
+        showCode('bindingResult', data);
+      } catch (error) {
+        showResult('bindingResult', `❌ 測試失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 解除綁定
+    document.getElementById('unbindBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=unbind_member_number&uid=demo-user-12345&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          showResult('bindingResult', '✅ 解除綁定成功', 'success');
+        } else {
+          showResult('bindingResult', `❌ 解除綁定失敗: ${data.error}`, 'error');
+        }
+        showCode('bindingResult', data);
+      } catch (error) {
+        showResult('bindingResult', `❌ 解除綁定失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 查找會員
+    document.getElementById('findBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=find_member_by_number&member_number=0001&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok) {
+          if (data.found) {
+            showResult('findResult', `✅ 找到會員: ${data.member.name}`, 'success');
+          } else {
+            showResult('findResult', '📋 未找到會員', 'info');
+          }
+          showCode('findResult', data);
+        } else {
+          showResult('findResult', '❌ 查找失敗', 'error');
+          showCode('findResult', data);
+        }
+      } catch (error) {
+        showResult('findResult', `❌ 查找失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 查找不存在的會員
+    document.getElementById('findNotExistBtn').addEventListener('click', async () => {
+      try {
+        const url = `${APPS_SCRIPT_ENDPOINT}?action=find_member_by_number&member_number=9999&origin=${window.location.origin}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.ok && !data.found) {
+          showResult('findResult', '✅ 正確返回未找到', 'success');
+        } else {
+          showResult('findResult', '❌ 應該返回未找到', 'error');
+        }
+        showCode('findResult', data);
+      } catch (error) {
+        showResult('findResult', `❌ 查找失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 完整流程測試
+    document.getElementById('fullTestBtn').addEventListener('click', async () => {
+      const results = [];
+      let passed = 0;
+      
+      showResult('fullTestResult', '🚀 開始完整流程測試...', 'info');
+      
+      const tests = [
+        {
+          name: 'API健康檢查',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=health`);
+            const data = await res.json();
+            return data.ok;
+          }
+        },
+        {
+          name: '檢查未綁定狀態',
+          test: async () => {
+            // 先確保解除綁定
+            await fetch(`${APPS_SCRIPT_ENDPOINT}?action=unbind_member_number&uid=test-user`);
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=get_member_binding&uid=test-user`);
+            const data = await res.json();
+            return data.ok && !data.bound;
+          }
+        },
+        {
+          name: '綁定會員號碼',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=test-user&member_number=1234`);
+            const data = await res.json();
+            return data.ok && data.member_number === '1234';
+          }
+        },
+        {
+          name: '檢查已綁定狀態',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=get_member_binding&uid=test-user`);
+            const data = await res.json();
+            return data.ok && data.bound && data.member_number === '1234';
+          }
+        },
+        {
+          name: '測試重複綁定',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=bind_member_number&uid=another-user&member_number=1234`);
+            const data = await res.json();
+            return !data.ok && data.code === 'ALREADY_BOUND';
+          }
+        },
+        {
+          name: '查找已綁定會員',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=find_member_by_number&member_number=1234`);
+            const data = await res.json();
+            return data.ok && data.found;
+          }
+        },
+        {
+          name: '解除綁定',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=unbind_member_number&uid=test-user`);
+            const data = await res.json();
+            return data.ok;
+          }
+        },
+        {
+          name: '驗證解除綁定後狀態',
+          test: async () => {
+            const res = await fetch(`${APPS_SCRIPT_ENDPOINT}?action=get_member_binding&uid=test-user`);
+            const data = await res.json();
+            return data.ok && !data.bound;
+          }
+        }
+      ];
+      
+      for (const test of tests) {
+        try {
+          const result = await test.test();
+          results.push({ name: test.name, passed: result });
+          if (result) passed++;
+        } catch (error) {
+          results.push({ name: test.name, passed: false, error: error.message });
+        }
+      }
+      
+      const summary = `
+🔍 完整流程測試結果:
+  總測試數: ${tests.length}
+  通過測試: ${passed}
+  失敗測試: ${tests.length - passed}
+  成功率: ${Math.round((passed/tests.length) * 100)}%
+
+${results.map(r => `  ${r.passed ? '✅' : '❌'} ${r.name}${r.error ? ` (${r.error})` : ''}`).join('\n')}
+
+${passed === tests.length ? '🎉 所有測試通過！會員號碼綁定功能正常工作。' : '⚠️ 部分測試失敗，請檢查實現。'}
+      `;
+      
+      showResult('fullTestResult', summary, passed === tests.length ? 'success' : 'error');
+    });
+
+    // 自動運行健康檢查
+    setTimeout(() => {
+      document.getElementById('healthBtn').click();
+    }, 500);
+  </script>
+</body>
+</html>

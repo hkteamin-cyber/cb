@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>付款成功 - 自動派碼</title>
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    /* 簡潔的成功頁樣式（就地最小可用版本） */
+    body { background: #0f1115; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }
+    .success-container { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .title { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 700; margin: 0 0 8px; }
+    .subtitle { color: #cbd5e1; font-size: .95rem; margin: 0 0 18px; }
+    .status { display: inline-flex; align-items: center; gap: 8px; background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); padding: 6px 10px; border-radius: 999px; font-size: .9rem; }
+    .section { margin-top: 20px; }
+    .code-box { background: #0b0d12; border: 1px dashed rgba(255,255,255,0.2); border-radius: 14px; padding: 18px; text-align: center; }
+    .code { font-size: 1.5rem; letter-spacing: .06em; font-weight: 800; color: #ffb020; word-break: break-all; }
+    .muted { color: #94a3b8; font-size: .9rem; }
+    .row { display: flex; gap: 10px; align-items: stretch; margin-top: 10px; flex-wrap: wrap; }
+    .btn { flex: 1; min-width: 140px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: transform .06s ease; user-select: none; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.14); }
+    .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 18px 0; }
+    .helper { font-size: .92rem; color: #cbd5e1; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+    .error { color: #fca5a5; }
+    .ok { color: #86efac; }
+  </style>
+</head>
+<body>
+  <div class="success-container">
+    <div class="card">
+      <div class="title">
+        <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON" style="width:32px;height:32px;border-radius:8px;object-fit:cover;"/></a>
+        付款成功（自動派碼）
+      </div>
+      <div id="statusLine" class="subtitle">正在確認付款並派發充值碼，請稍候…</div>
+      <div class="status" id="statusPill"><span class="spinner" id="pillSpinner"></span><span id="pillText">處理中</span></div>
+
+      <div class="section">
+        <div class="code-box">
+          <div class="muted" style="margin-bottom:8px;">您的電話儲值卡充值碼</div>
+          <div id="codeValue" class="code">———</div>
+          <div id="codeTips" class="muted" style="margin-top:8px;">請勿外洩，僅供本次交易使用</div>
+          <div class="row">
+            <button id="copyBtn" class="btn-glow-primary" disabled>
+              <i class="fas fa-copy"></i>
+              <span>複製充值碼</span>
+              <div class="btn-glow"></div>
+            </button>
+            <button id="refreshBtn" class="btn-glow-primary">
+              <i class="fas fa-sync"></i>
+              <span>未見到？再試一次</span>
+              <div class="btn-glow"></div>
+            </button>
+           </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="helper">
+        · 如長時間未顯示充值碼，請截圖此頁面，聯絡客服核查。<br/>
+        · 你亦可稍後透過此頁再次查看，使用相同的連結即可。
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.uid) {
+        window.CBON_UID = user.uid;
+        try { localStorage.setItem('CBON_UID', user.uid); } catch (_) {}
+      }
+    });
+  </script>
+  <script src="stripe-success.js"></script>
+</body>
+</html>

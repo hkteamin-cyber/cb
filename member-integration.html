@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員整合管理 - CBON</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#0f1115; color:#fff; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang HK','PingFang TC','Microsoft JhengHei','Noto Sans TC',sans-serif; }
+    .container { max-width:1200px; margin:0 auto; padding:20px 16px 80px; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); margin-bottom: 20px; }
+    .title { font-size:1.4rem; font-weight:800; margin:0 0 16px; color:#4285F4; }
+    .subtitle { color:#cbd5e1; margin:0 0 12px; font-size:0.9rem; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 6px; font-weight: 600; color: #e2e8f0; }
+    .form-input { width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; }
+    .form-input:focus { outline: none; border-color: #4285F4; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg,#4285F4,#34A853); color: white; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-danger { background: linear-gradient(135deg,#dc2626,#b91c1c); color: white; }
+    .btn:hover { transform: translateY(-1px); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .status-success { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .status-warning { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .status-error { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #4285F4, #34A853); transition: width 0.3s; }
+    .log-item { padding: 10px; border-left: 3px solid #4285F4; margin: 8px 0; background: rgba(255,255,255,0.03); border-radius: 4px; }
+    .log-time { color: #94a3b8; font-size: 12px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .table th { background: rgba(255,255,255,0.05); font-weight: 600; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頭部 -->
+    <div class="card">
+      <div class="title">
+        <i class="fas fa-users-cog"></i>
+        會員整合管理系統
+      </div>
+      <p class="subtitle">整合多個網站的會員記錄到 CBON 統一平台</p>
+    </div>
+
+    <!-- 網站配置 -->
+    <div class="grid">
+      <div class="card">
+        <h3><i class="fas fa-cog"></i> 網站配置</h3>
+        <div class="form-group">
+          <label class="form-label">網站 1 名稱</label>
+          <input type="text" class="form-input" id="site1Name" placeholder="例如：舊版商城">
+        </div>
+        <div class="form-group">
+          <label class="form-label">資料庫連接字串</label>
+          <input type="text" class="form-input" id="site1Db" placeholder="資料庫URL或API端點">
+        </div>
+        <div class="form-group">
+          <label class="form-label">API 密鑰</label>
+          <input type="password" class="form-input" id="site1Key" placeholder="認證密鑰">
+        </div>
+        <span class="status-badge status-warning" id="site1Status">未配置</span>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-cog"></i> 網站配置</h3>
+        <div class="form-group">
+          <label class="form-label">網站 2 名稱</label>
+          <input type="text" class="form-input" id="site2Name" placeholder="例如：EShop">
+        </div>
+        <div class="form-group">
+          <label class="form-label">資料庫連接字串</label>
+          <input type="text" class="form-input" id="site2Db" placeholder="資料庫URL或API端點">
+        </div>
+        <div class="form-group">
+          <label class="form-label">API 密鑰</label>
+          <input type="password" class="form-input" id="site2Key" placeholder="認證密鑰">
+        </div>
+        <span class="status-badge status-warning" id="site2Status">未配置</span>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-cog"></i> 網站配置</h3>
+        <div class="form-group">
+          <label class="form-label">網站 3 名稱</label>
+          <input type="text" class="form-input" id="site3Name" placeholder="例如：WhatsApp商城">
+        </div>
+        <div class="form-group">
+          <label class="form-label">資料庫連接字串</label>
+          <input type="text" class="form-input" id="site3Db" placeholder="資料庫URL或API端點">
+        </div>
+        <div class="form-group">
+          <label class="form-label">API 密鑰</label>
+          <input type="password" class="form-input" id="site3Key" placeholder="認證密鑰">
+        </div>
+        <span class="status-badge status-warning" id="site3Status">未配置</span>
+      </div>
+    </div>
+
+    <!-- 整合操作 -->
+    <div class="card">
+      <h3><i class="fas fa-sync-alt"></i> 會員數據整合</h3>
+      <div class="grid">
+        <div>
+          <h4>數據同步選項</h4>
+          <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="syncUsers" checked> 同步用戶基本資料</label>
+          </div>
+          <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="syncOrders" checked> 同步訂單記錄</label>
+          </div>
+          <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="syncPoints" checked> 同步積分記錄</label>
+          </div>
+          <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="mergeAccounts"> 自動合併重複帳戶</label>
+          </div>
+          <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="handleMemberNumbers"> 處理4位數會員號碼</label>
+          </div>
+        </div>
+        <div>
+          <h4>同步進度</h4>
+          <div class="progress-bar">
+            <div class="progress-fill" id="syncProgress" style="width: 0%;"></div>
+          </div>
+          <p id="syncStatus">準備就緒</p>
+          <div style="margin-top: 16px;">
+            <button class="btn btn-primary" id="startSync">
+              <i class="fas fa-play"></i> 開始同步
+            </button>
+            <button class="btn btn-secondary" id="testConnection">
+              <i class="fas fa-plug"></i> 測試連接
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 同步日誌 -->
+    <div class="card">
+      <h3><i class="fas fa-list"></i> 同步日誌</h3>
+      <div id="syncLogs">
+        <div class="log-item">
+          <div class="log-time">2024-01-20 14:30:00</div>
+          <div>系統初始化完成</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 會員統計 -->
+    <div class="card">
+      <h3><i class="fas fa-chart-bar"></i> 會員統計</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>來源網站</th>
+            <th>會員數量</th>
+            <th>訂單總數</th>
+            <th>積分總額</th>
+            <th>最後同步</th>
+            <th>狀態</th>
+          </tr>
+        </thead>
+        <tbody id="statsTable">
+          <tr>
+            <td>CBON 本站</td>
+            <td id="localUsers">0</td>
+            <td id="localOrders">0</td>
+            <td id="localPoints">0</td>
+            <td>即時</td>
+            <td><span class="status-badge status-success">正常</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, waitForAuth } from './js/firebase-config.js';
+
+    class MemberIntegration {
+      constructor() {
+        this.isAdmin = false;
+        this.syncInProgress = false;
+        this.init();
+      }
+
+      async init() {
+        await this.checkAdminAccess();
+        this.bindEvents();
+        this.loadConfiguration();
+        this.loadStatistics();
+      }
+
+      async checkAdminAccess() {
+        const user = await waitForAuth();
+        if (!user) {
+          alert('請先登入');
+          window.location.href = 'account.html';
+          return;
+        }
+
+        console.log('檢查管理員權限:', {
+          userEmail: user.email,
+          userName: user.displayName,
+          uid: user.uid,
+          isDemo: user.isDemo
+        });
+
+        // 檢查是否為管理員（這裡可以設定管理員郵箱列表）
+        const adminEmails = [
+          'admin@cbon.shop',
+          'cbonshare@gmail.com',  // 請替換為實際管理員郵箱
+          'demo@example.com'      // 開發模式模擬用戶
+        ];
+        
+        this.isAdmin = adminEmails.includes(user.email);
+        console.log('管理員權限結果:', this.isAdmin);
+        
+        if (!this.isAdmin) {
+          alert(`您沒有管理員權限\n\n當前用戶: ${user.email}\n管理員列表: ${adminEmails.join(', ')}\n\n請聯繫管理員新增您的郵箱到管理員列表中`);
+          window.location.href = 'index.html';
+        } else {
+          console.log('✅ 管理員權限驗證成功');
+        }
+      }
+
+      bindEvents() {
+        document.getElementById('testConnection').addEventListener('click', () => this.testConnections());
+        document.getElementById('startSync').addEventListener('click', () => this.startSync());
+      }
+
+      loadConfiguration() {
+        // 從 localStorage 載入配置
+        ['site1', 'site2', 'site3'].forEach(site => {
+          const config = localStorage.getItem(`${site}Config`);
+          if (config) {
+            const data = JSON.parse(config);
+            document.getElementById(`${site}Name`).value = data.name || '';
+            document.getElementById(`${site}Db`).value = data.db || '';
+            document.getElementById(`${site}Key`).value = data.key || '';
+            this.updateSiteStatus(site, 'success', '已配置');
+          }
+        });
+      }
+
+      saveConfiguration() {
+        ['site1', 'site2', 'site3'].forEach(site => {
+          const config = {
+            name: document.getElementById(`${site}Name`).value,
+            db: document.getElementById(`${site}Db`).value,
+            key: document.getElementById(`${site}Key`).value
+          };
+          localStorage.setItem(`${site}Config`, JSON.stringify(config));
+        });
+      }
+
+      updateSiteStatus(site, status, message) {
+        const statusEl = document.getElementById(`${site}Status`);
+        statusEl.className = `status-badge status-${status}`;
+        statusEl.textContent = message;
+      }
+
+      async testConnections() {
+        this.addLog('開始測試連接...');
+        
+        for (let i = 1; i <= 3; i++) {
+          const site = `site${i}`;
+          const name = document.getElementById(`${site}Name`).value;
+          const db = document.getElementById(`${site}Db`).value;
+          const key = document.getElementById(`${site}Key`).value;
+
+          if (!name || !db) {
+            this.updateSiteStatus(site, 'warning', '配置不完整');
+            continue;
+          }
+
+          try {
+            // 模擬連接測試
+            await this.simulateApiCall(db, key);
+            this.updateSiteStatus(site, 'success', '連接正常');
+            this.addLog(`✅ ${name} 連接測試成功`);
+          } catch (error) {
+            this.updateSiteStatus(site, 'error', '連接失敗');
+            this.addLog(`❌ ${name} 連接測試失敗: ${error.message}`);
+          }
+        }
+      }
+
+      async simulateApiCall(db, key) {
+        // 模擬 API 調用延遲
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        
+        // 模擬隨機成功/失敗
+        if (Math.random() > 0.8) {
+          throw new Error('連接超時或認證失敗');
+        }
+      }
+
+      async startSync() {
+        if (this.syncInProgress) return;
+        
+        this.syncInProgress = true;
+        this.addLog('🚀 開始同步會員數據...');
+        
+        const progressEl = document.getElementById('syncProgress');
+        const statusEl = document.getElementById('syncStatus');
+        
+        try {
+          // 模擬同步過程
+          const steps = [
+            '驗證數據源連接',
+            '提取用戶基本資料',
+            '同步訂單記錄',
+            '計算積分轉換',
+            '合併重複帳戶',
+            '更新本地數據庫',
+            '驗證數據完整性'
+          ];
+
+          for (let i = 0; i < steps.length; i++) {
+            statusEl.textContent = steps[i];
+            progressEl.style.width = `${((i + 1) / steps.length) * 100}%`;
+            this.addLog(`📝 ${steps[i]}`);
+            
+            // 模擬處理時間
+            await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+          }
+
+          statusEl.textContent = '同步完成';
+          this.addLog('✅ 會員數據同步完成');
+          this.loadStatistics(); // 重新載入統計數據
+          
+        } catch (error) {
+          statusEl.textContent = '同步失敗';
+          this.addLog(`❌ 同步失敗: ${error.message}`);
+        } finally {
+          this.syncInProgress = false;
+        }
+      }
+
+      loadStatistics() {
+        // 模擬載入統計數據
+        const sites = [
+          { name: '網站 1', users: 1245, orders: 3567, points: 89234 },
+          { name: '網站 2', users: 892, orders: 2134, points: 45678 },
+          { name: '網站 3', users: 567, orders: 1456, points: 23456 }
+        ];
+
+        const tbody = document.getElementById('statsTable');
+        sites.forEach(site => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${site.name}</td>
+            <td>${site.users.toLocaleString()}</td>
+            <td>${site.orders.toLocaleString()}</td>
+            <td>${site.points.toLocaleString()}</td>
+            <td>${new Date().toLocaleString()}</td>
+            <td><span class="status-badge status-success">已同步</span></td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      addLog(message) {
+        const logsEl = document.getElementById('syncLogs');
+        const logItem = document.createElement('div');
+        logItem.className = 'log-item';
+        logItem.innerHTML = `
+          <div class="log-time">${new Date().toLocaleString()}</div>
+          <div>${message}</div>
+        `;
+        logsEl.insertBefore(logItem, logsEl.firstChild);
+      }
+    }
+
+    // 初始化會員整合系統
+    new MemberIntegration();
+  </script>
+</body>
+</html>

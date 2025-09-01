@@ -1,0 +1,57 @@
+{
+  "sample_responses": [
+    {
+      "id": "resp_001",
+      "prompt": "你好，有什么可以帮助您的？",
+      "response": "您好！我是CB AI助手，可以帮您回答关于CBon商城的问题、介绍产品、提供购买建议等。请问有什么我可以为您效劳的吗？",
+      "category": "greeting",
+      "language": "zh-CN",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "resp_002",
+      "prompt": "请介绍一下CB商城",
+      "response": "CB商城是施幫CBon的在线购物平台，提供各种电话卡和数据服务。您可以直接访问 https://cbon.shop.sn.cn/#/index 进行购买，或到旺角先達廣場1樓F88舖实体店购买。",
+      "category": "introduction",
+      "language": "zh-CN",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "resp_003",
+      "prompt": "有什么优惠的电话卡？",
+      "response": "目前我们有超值优惠：\n\n1. 香港移动年卡：只需$88（原价$248），包含香港100GB数据及2000分钟通话，有效期60日\n2. HK Mobile数据计划：$59享受100GB@42Mbps数据，外加2000分钟本地通话及21Mbps午夜快线\n\n可在CB商城或旺角实体店购买！",
+      "category": "product_info",
+      "language": "zh-CN",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "resp_004",
+      "prompt": "店铺地址和营业时间？",
+      "response": "施幫CBon实体店地址：\n香港旺角亚皆老街83号先达广场1楼F88铺\n\n营业时间：\n- 星期一至六：13:30-19:30\n- 星期日及公众假期：13:00-18:00\n\n支持现金、八达通、WeChat pay、Alipay、转数快支付。",
+      "category": "store_info",
+      "language": "zh-CN",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "resp_005",
+      "prompt": "如何取货？",
+      "response": "取货方式：\n\n1. 旺角自提点：先达广场1楼F88（营业时间同上）\n2. 顺丰到付\n3. 易寄取$15（1-15张内，可跟踪邮件）\n4. 平邮每张$3（不保平邮寄失风险）\n5. 旺角地铁D闸口交收（需3小时前预约）\n\n购买后请留意CB商城我的订单查看取货码！",
+      "category": "delivery",
+      "language": "zh-CN",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "templates": {
+    "greeting": "您好！我是CB AI助手，很高兴为您服务。",
+    "goodbye": "感谢您的使用，如有任何问题请随时联系！",
+    "error": "抱歉，我暂时无法理解您的问题，请换个方式提问试试。",
+    "product_inquiry": "关于{{product_name}}，我们有以下优惠：{{price}}，包含{{features}}。",
+    "store_direction": "我们实体店位于{{address}}，营业时间为{{business_hours}}。",
+    "delivery_info": "您可以选择{{delivery_options}}，具体操作请参考CB商城。"
+  },
+  "data_sources": {
+    "store_name": "香港旺角先達廣場1樓F88. 施幫CBon",
+    "last_updated": "2024-12-19",
+    "data_version": "1.0"
+  }
+}

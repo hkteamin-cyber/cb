@@ -1,0 +1,507 @@
+/* 全局設置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* 移動應用容器 */
+.mobile-app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+/* 頂部Logo區 */
+.mobile-header {
+    background: #ffffff;
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-area .logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #ff6b35;
+    object-fit: cover; /* 確保非正方圖也能正常置入圓形容器 */
+}
+
+.logo-area h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ff6b35 0%, #ffa726 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo-area p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* 優惠展示區 */
+.offers-section {
+    flex: 1;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.offer-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+.offer-card.featured {
+    background: linear-gradient(135deg, #ff6b35 0%, #ffa726 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.offer-badge {
+    position: absolute;
+    top: -5px;
+    right: 10px;
+    background: #ff4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0 0 8px 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.offer-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.offer-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ff6b35;
+}
+
+.offer-price {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.current-price {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.original-price {
+    font-size: 1rem;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.discount {
+    background: #ff4444;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.offer-features {
+    margin-bottom: 1rem;
+}
+
+.feature {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.offers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.offers-grid .offer-card {
+    text-align: center;
+    padding: 1rem 0.5rem;
+}
+
+.offer-icon {
+    font-size: 2rem;
+    margin-top: 0.5rem;
+}
+
+/* 跑馬燈效果按鈕 */
+.buy-btn-main {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    background: linear-gradient(135deg,#ff6b35 0%,#ff8c42 50%,#ffa726 100%);
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(255,107,53,0.35);
+    cursor: pointer;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.buy-btn-main .btn-glow {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg);
+    animation: btnShine 2.6s infinite;
+}
+
+/* 可重用：與 buy-btn-main 視覺一致的走馬燈按鈕，不強制 100% 寬度，方便橫向排列 */
+.btn-glow-primary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 750;
+    color: #fff;
+    background: linear-gradient(135deg,#ff6b35 0%,#ff8c42 50%,#ffa726 100%);
+    box-shadow: 0 8px 24px rgba(255,107,53,0.35);
+    cursor: pointer;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.btn-glow-primary .btn-glow {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg);
+    animation: btnShine 2.6s infinite;
+}
+
+.btn-glow-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 750;
+    color: #fff;
+    background: linear-gradient(135deg,#ff6b35 0%,#ff8c42 50%,#ffa726 100%);
+    box-shadow: 0 8px 24px rgba(255,107,53,0.35);
+    cursor: pointer;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.btn-glow-icon .btn-glow {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg);
+    animation: btnShine 2.6s infinite;
+}
+
+@keyframes btnShine {
+    0% { left: -40%; }
+    60% { left: 120%; }
+    100% { left: 120%; }
+}
+
+/* 底部導航 */
+.bottom-nav-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    /* 防呆：隱藏可能被誤渲染的文字節點（例如 "div div span"） */
+    font-size: 0;
+}
+
+.nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    min-width: 60px;
+    /* 還原字體大小給按鈕內文 */
+    font-size: 1rem;
+}
+
+.nav-btn:hover {
+    color: #ff6b35;
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.nav-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-btn span {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.nav-btn.whatsapp:hover {
+    color: #25d366;
+    background: rgba(37, 211, 102, 0.1);
+}
+
+.nav-btn.telegram:hover {
+    color: #0088cc;
+    background: rgba(0, 136, 204, 0.1);
+}
+
+.nav-btn.eshop:hover {
+    color: #ff6b35;
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.nav-btn.topup:hover {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.nav-btn.ai:hover {
+    color: #6f42c1;
+    background: rgba(111, 66, 193, 0.1);
+}
+
+/* 購買頁面樣式 */
+.buy-section {
+    flex: 1;
+    padding: 16px;
+    background: #f8f9fa;
+    padding-bottom: 96px; /* 避開底部導航 */
+}
+
+.purchase-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+}
+
+.purchase-header h2 {
+    margin: 8px 0 6px;
+    font-size: 1.2rem;
+}
+
+.purchase-desc {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,167,38,0.15));
+    color: #ff6b35;
+    border: 1px solid rgba(255,107,53,0.35);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.purchase-action {
+    margin: 16px 0 8px;
+}
+
+.status-message {
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    padding-top: 10px;
+}
+
+.status-icon {
+    font-size: 1.4rem;
+    color: #ff6b35;
+    margin-bottom: 6px;
+}
+
+.purchase-tips {
+    margin-top: 8px;
+    display: grid;
+    gap: 8px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* 返回按鈕 */
+.back-btn-mobile {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: #555;
+    text-decoration: none;
+    background: rgba(0,0,0,0.04);
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.back-btn-mobile:hover {
+    background: rgba(0,0,0,0.08);
+}
+
+/* 響應式優化 - 為底部導航留出空間，避免內容被遮蓋 */
+@media (max-width: 768px) {
+    .offers-section {
+        padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    }
+    
+    /* 縮短主要按鈕與下方卡片的距離 */
+    .offer-card.featured {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* 緊湊排版：減少網格間距 */
+    .offers-grid {
+        gap: 0.8rem;
+        margin-top: 0.5rem;
+    }
+}
+
+/* 顯示控制：手機直屏 vs 桌面版 */
+.mobile-only {
+    display: block;
+}
+
+.desktop-only {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .mobile-only {
+        display: none !important;
+    }
+    .desktop-only {
+        display: block !important;
+    }
+}
+
+/* 公司資訊 Footer */
+.site-footer {
+    background: #ffffff;
+    border-top: 1px solid #e9ecef;
+    padding: 16px 16px 84px; /* 底部留白避免被固定導航遮擋 */
+    color: #444;
+}
+
+.footer-container {
+    max-width: 1024px;
+    margin: 0 auto;
+}
+
+.footer-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ff6b35;
+    margin-bottom: 8px;
+}
+
+.footer-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.footer-list li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    line-height: 1.6;
+    font-size: 0.95rem; /* 與整站字體相協調 */
+}
+
+.footer-list strong {
+    color: #333;
+}
+
+@media (min-width: 640px) {
+    .footer-list {
+        gap: 8px;
+    }
+    .footer-list li {
+        font-size: 1rem;
+    }
+}

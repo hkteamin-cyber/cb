@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CBON AI 客服 - 智能助手</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/ai-chat.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-app">
+        <!-- 簡潔頂部區 -->
+        <header class="ai-header">
+            <a href="index.html" class="back-btn-simple">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="header-title">
+                <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="header-logo"></a>
+                <h1>AI 客服</h1>
+            </div>
+            <!-- 原清除按鈕已移除 -->
+        </header>
+
+        <!-- 聊天區域 -->
+        <main class="chat-area">
+            <div class="chat-messages" id="chatMessages">
+                <!-- 歡迎區 -->
+                <div class="welcome-section">
+                    <div class="welcome-title">👋 歡迎使用 CBON AI</div>
+                    <div class="welcome-subtitle">有什麼可以幫助您？</div>
+                    
+                    <!-- 快速按鈕 -->
+                    <div class="quick-buttons">
+                        <button class="quick-btn-simple" data-message="店舖地址在哪裡？">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>店舖地址</span>
+                        </button>
+                        <button class="quick-btn-simple" data-message="有什麼電話卡優惠？">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>電話卡優惠</span>
+                        </button>
+                        <button class="quick-btn-simple" data-message="如何取貨？">
+                            <i class="fas fa-shipping-fast"></i>
+                            <span>取貨方式</span>
+                        </button>
+                        <button class="quick-btn-simple" data-message="會員制度如何？">
+                            <i class="fas fa-crown"></i>
+                            <span>會員制度</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 滾動到底部按鈕 -->
+            <button id="scrollToBottomBtn" class="scroll-btn-simple hidden">
+                <i class="fas fa-arrow-down"></i>
+            </button>
+        </main>
+
+        <!-- 輸入區域 -->
+        <footer class="input-section">
+            <div class="disclaimer-simple">
+                💡 AI 回覆僅供參考，詳情請以官方群組為準
+            </div>
+            <div class="input-container">
+                <input type="text" 
+                       id="messageInput" 
+                       placeholder="輸入您的問題..." 
+                       maxlength="500">
+                <button class="btn-glow-icon" id="sendBtn">
+                     <i class="fas fa-paper-plane"></i>
+                    <div class="btn-glow"></div>
+                 </button>
+            </div>
+            <!-- 打字指示器 -->
+            <div class="typing-simple" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </footer>
+
+        <!-- 底部導航 -->
+        <nav class="bottom-nav-mobile">
+            <a href="https://cbon.shop.sn.cn/#/index" class="nav-btn eshop" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-shopping-cart"></i>
+                <span>EShop</span>
+            </a>
+            <a href="codes.html" class="nav-btn topup">
+                <i class="fas fa-credit-card"></i>
+                <span>Code</span>
+            </a>
+            <a href="ai-chat.html" class="nav-btn ai active">
+                <i class="fas fa-robot"></i>
+                <span>AI</span>
+            </a>
+            <a href="account.html" class="nav-btn account">
+                <i class="fas fa-user"></i>
+                <span>會員</span>
+            </a>
+            <a href="/speedtest.html" class="nav-btn" style="background:#0ea5e9;color:#0b1220;">
+                <i class="fas fa-gauge"></i>
+                <span>Speed</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- 腳本文件 -->
+    <script src="js/app.js?v=iosfix1" type="module"></script>
+</body>
+</html>

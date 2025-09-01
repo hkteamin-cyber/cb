@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手机登录修复 - CBON</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #0f1115;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #4285F4;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status-success { background: rgba(34,197,94,0.2); color: #22c55e; }
+        .status-warning { background: rgba(245,158,11,0.2); color: #fbbf24; }
+        .status-error { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .status-info { background: rgba(59,130,246,0.2); color: #3b82f6; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg,#4285F4,#34A853);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66,133,244,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .problem-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .problem-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .problem-list li:last-child {
+            border-bottom: none;
+        }
+
+        .solution-steps {
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .step {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #3b82f6;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .solution-steps {
+            counter-reset: step-counter;
+        }
+
+        .device-info {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-mobile-alt"></i> 手机Chrome登录修复</h1>
+            <p>诊断并解决手机版Chrome无法登录Google的问题</p>
+        </div>
+
+        <!-- 设备信息检测 -->
+        <div class="card">
+            <h3><i class="fas fa-info-circle"></i> 设备信息</h3>
+            <div id="deviceInfo" class="device-info">
+                正在检测设备信息...
+            </div>
+        </div>
+
+        <!-- 问题诊断 -->
+        <div class="card">
+            <h3><i class="fas fa-stethoscope"></i> 问题诊断</h3>
+            <div id="diagnosisResults">
+                <div class="status-badge status-info">
+                    <i class="fas fa-spinner fa-spin"></i> 正在诊断...
+                </div>
+            </div>
+        </div>
+
+        <!-- 常见问题 -->
+        <div class="card">
+            <h3><i class="fas fa-exclamation-triangle"></i> 常见问题与解决方案</h3>
+            
+            <div class="problem-list">
+                <li>
+                    <i class="fas fa-ban" style="color: #ef4444; margin-top: 3px;"></i>
+                    <div>
+                        <strong>弹窗被阻止</strong>
+                        <p>Chrome 移动端默认阻止弹窗，导致 Google 登录窗口无法打开</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-shield-alt" style="color: #fbbf24; margin-top: 3px;"></i>
+                    <div>
+                        <strong>跨域限制</strong>
+                        <p>CORS 策略阻止了第三方登录请求</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-cookie-bite" style="color: #ef4444; margin-top: 3px;"></i>
+                    <div>
+                        <strong>Cookie/存储限制</strong>
+                        <p>移动浏览器的隐私设置可能阻止必要的 Cookie</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-wifi" style="color: #3b82f6; margin-top: 3px;"></i>
+                    <div>
+                        <strong>网络连接问题</strong>
+                        <p>不稳定的网络连接导致认证流程中断</p>
+                    </div>
+                </li>
+            </div>
+        </div>
+
+        <!-- 修复步骤 -->
+        <div class="card">
+            <h3><i class="fas fa-wrench"></i> 修复步骤</h3>
+            
+            <div class="solution-steps">
+                <div class="step">
+                    <strong>清除浏览器缓存</strong>
+                    <p>Chrome菜单 → 设置 → 隐私设置和安全性 → 清除浏览数据</p>
+                </div>
+                <div class="step">
+                    <strong>允许弹窗</strong>
+                    <p>访问网站时，点击地址栏的锁图标 → 弹出式窗口和重定向 → 允许</p>
+                </div>
+                <div class="step">
+                    <strong>启用第三方Cookie</strong>
+                    <p>Chrome设置 → 隐私设置和安全性 → Cookie和其他网站数据 → 允许所有Cookie</p>
+                </div>
+                <div class="step">
+                    <strong>检查网络连接</strong>
+                    <p>确保网络稳定，尝试切换到WiFi或4G网络</p>
+                </div>
+                <div class="step">
+                    <strong>使用重定向登录</strong>
+                    <p>如果弹窗登录失败，系统会自动切换到页面重定向登录方式</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试登录 -->
+        <div class="card">
+            <h3><i class="fas fa-vial"></i> 测试登录功能</h3>
+            <p>点击下方按钮测试当前环境下的Google登录功能：</p>
+            
+            <div class="quick-actions">
+                <button id="testLoginBtn" class="btn">
+                    <i class="fab fa-google"></i> 测试Google登录
+                </button>
+                <button id="testRedirectBtn" class="btn btn-secondary">
+                    <i class="fas fa-external-link-alt"></i> 测试重定向登录
+                </button>
+            </div>
+            
+            <div id="testResults"></div>
+        </div>
+
+        <!-- 备用方案 -->
+        <div class="card">
+            <h3><i class="fas fa-life-ring"></i> 备用方案</h3>
+            <p>如果上述方法都无法解决问题，请尝试以下备用方案：</p>
+            
+            <div class="quick-actions">
+                <a href="https://c----b.web.app/login-test.html" class="btn">
+                    <i class="fas fa-flask"></i> 登录测试页面
+                </a>
+                <a href="https://c----b.web.app/account.html" class="btn btn-secondary">
+                    <i class="fas fa-user"></i> 直接访问会员中心
+                </a>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px;">
+                <p><strong>📱 替代方案：</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>使用其他浏览器（如Safari、Firefox等）</li>
+                    <li>在电脑端完成登录后同步到手机</li>
+                    <li>联系客服获取人工协助</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 联系客服 -->
+        <div class="card">
+            <h3><i class="fas fa-headset"></i> 需要帮助？</h3>
+            <p>如果问题仍然存在，请通过以下方式联系我们：</p>
+            
+            <div class="quick-actions">
+                <a href="https://chat.whatsapp.com/JiJ6SlwGVfrAl1YU6qonWC" class="btn" style="background: #25D366;">
+                    <i class="fab fa-whatsapp"></i> WhatsApp客服
+                </a>
+                <a href="https://t.me/cbonshare?boost" class="btn" style="background: #0088cc;">
+                    <i class="fab fa-telegram-plane"></i> Telegram支持
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 检测设备信息
+        function detectDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            
+            const info = {
+                'User Agent': navigator.userAgent,
+                '浏览器': getBrowserInfo(),
+                '操作系统': getOSInfo(),
+                '屏幕尺寸': `${screen.width} × ${screen.height}`,
+                '视窗尺寸': `${window.innerWidth} × ${window.innerHeight}`,
+                '是否移动设备': /Mobile|Android|iPhone|iPad/.test(navigator.userAgent),
+                '是否支持触摸': 'ontouchstart' in window,
+                '网络状态': navigator.onLine ? '在线' : '离线',
+                'Cookie启用': navigator.cookieEnabled ? '是' : '否'
+            };
+            
+            let html = '';
+            for (const [key, value] of Object.entries(info)) {
+                html += `<div><strong>${key}:</strong> ${value}</div>`;
+            }
+            
+            deviceInfo.innerHTML = html;
+        }
+
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Edge')) return 'Edge';
+            return '未知';
+        }
+
+        function getOSInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Android')) return 'Android';
+            if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+            if (ua.includes('Windows')) return 'Windows';
+            if (ua.includes('Mac')) return 'macOS';
+            return '未知';
+        }
+
+        // 运行诊断
+        function runDiagnosis() {
+            const diagnosisResults = document.getElementById('diagnosisResults');
+            const issues = [];
+            
+            // 检查是否为移动设备
+            if (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)) {
+                issues.push({
+                    type: 'info',
+                    icon: 'fa-mobile-alt',
+                    title: '移动设备检测',
+                    message: '当前使用移动设备访问'
+                });
+            }
+            
+            // 检查Cookie支持
+            if (!navigator.cookieEnabled) {
+                issues.push({
+                    type: 'error',
+                    icon: 'fa-cookie-bite',
+                    title: 'Cookie已禁用',
+                    message: '需要启用Cookie才能正常登录'
+                });
+            }
+            
+            // 检查是否在HTTPS环境
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                issues.push({
+                    type: 'warning',
+                    icon: 'fa-shield-alt',
+                    title: '非安全连接',
+                    message: '建议使用HTTPS连接以获得更好的安全性'
+                });
+            }
+            
+            // 检查浏览器兼容性
+            if (!window.fetch) {
+                issues.push({
+                    type: 'error',
+                    icon: 'fa-exclamation-triangle',
+                    title: '浏览器过旧',
+                    message: '当前浏览器版本过旧，可能不支持现代登录功能'
+                });
+            }
+            
+            // 检查网络状态
+            if (!navigator.onLine) {
+                issues.push({
+                    type: 'error',
+                    icon: 'fa-wifi',
+                    title: '网络离线',
+                    message: '当前设备未连接到网络'
+                });
+            }
+            
+            if (issues.length === 0) {
+                diagnosisResults.innerHTML = `
+                    <div class="status-badge status-success">
+                        <i class="fas fa-check-circle"></i> 未发现明显问题
+                    </div>
+                `;
+            } else {
+                let html = '';
+                issues.forEach(issue => {
+                    const statusClass = `status-${issue.type}`;
+                    html += `
+                        <div class="status-badge ${statusClass}">
+                            <i class="fas ${issue.icon}"></i> 
+                            <strong>${issue.title}:</strong> ${issue.message}
+                        </div>
+                    `;
+                });
+                diagnosisResults.innerHTML = html;
+            }
+        }
+
+        // 测试登录功能
+        async function testLogin(useRedirect = false) {
+            const testResults = document.getElementById('testResults');
+            
+            testResults.innerHTML = `
+                <div class="test-result status-info">
+                    <i class="fas fa-spinner fa-spin"></i> 正在测试登录功能...
+                </div>
+            `;
+            
+            try {
+                // 动态导入Firebase配置
+                const { signInWithGoogle } = await import('./js/firebase-config.js');
+                
+                if (useRedirect) {
+                    testResults.innerHTML = `
+                        <div class="test-result status-info">
+                            <i class="fas fa-external-link-alt"></i> 正在跳转到Google登录页面...
+                        </div>
+                    `;
+                }
+                
+                const user = await signInWithGoogle();
+                
+                if (user) {
+                    testResults.innerHTML = `
+                        <div class="test-result status-success">
+                            <i class="fas fa-check-circle"></i> 登录测试成功！用户: ${user.email || user.displayName || user.uid}
+                        </div>
+                    `;
+                } else if (useRedirect) {
+                    testResults.innerHTML = `
+                        <div class="test-result status-info">
+                            <i class="fas fa-hourglass-half"></i> 重定向登录已启动，请在返回后检查登录状态
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('登录测试失败:', error);
+                
+                let errorMessage = '未知错误';
+                let solution = '';
+                
+                if (error.code === 'auth/popup-blocked') {
+                    errorMessage = '弹窗被阻止';
+                    solution = '请在浏览器设置中允许弹窗，或尝试重定向登录';
+                } else if (error.code === 'auth/operation-not-supported-in-this-environment') {
+                    errorMessage = '当前环境不支持弹窗登录';
+                    solution = '将自动使用重定向登录方式';
+                } else if (error.message.includes('network')) {
+                    errorMessage = '网络连接问题';
+                    solution = '请检查网络连接后重试';
+                } else {
+                    errorMessage = error.message || error.toString();
+                }
+                
+                testResults.innerHTML = `
+                    <div class="test-result status-error">
+                        <i class="fas fa-times-circle"></i> 
+                        <strong>登录测试失败:</strong> ${errorMessage}
+                        ${solution ? `<br><small>建议: ${solution}</small>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        // 事件监听
+        document.getElementById('testLoginBtn').addEventListener('click', () => testLogin(false));
+        document.getElementById('testRedirectBtn').addEventListener('click', () => testLogin(true));
+
+        // 页面加载时运行检测
+        detectDeviceInfo();
+        runDiagnosis();
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>SpeedTest 紀錄列表</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.svg">
+  <link rel="stylesheet" href="/css/style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:#0b1220; color:#e5e7eb; }
+    .app { max-width: 960px; margin: 0 auto; padding: 16px 16px 88px; }
+    .card { background:linear-gradient(180deg, #0d172a, #0b1220); border:1px solid #1f2937; border-radius:14px; padding:16px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1 1 0; }
+    select, input[type="date"], input[type="text"] { width:100%; height:44px; border-radius:10px; border:1px solid #1f2937; background:#0b1220; color:#e5e7eb; padding:0 10px; }
+    label { font-size:12px; color:#9ca3af; display:block; margin-bottom:6px; }
+    .primary-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 14px; border-radius:12px; background: linear-gradient(135deg,#3b82f6 0%, #22d3ee 100%); color:#0b1220; font-weight:800; font-size:16px; border:none; box-shadow: 0 8px 24px rgba(34,211,238,0.25); }
+    .ghost { background:transparent; border:1px solid #1f2937; color:#cbd5e1; border-radius:10px; height:44px; padding:0 14px; }
+    .muted { color:#94a3b8; font-size:12px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #1f2937; padding:10px 8px; text-align:left; font-size:14px; }
+    th { color:#9ca3af; font-weight:600; position:sticky; top:0; background:#0b1220; }
+    .nowrap { white-space: nowrap; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; background:#111827; border:1px solid #1f2937; color:#9ca3af; font-size:12px; }
+  </style>
+  <!-- React & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+  <!-- Firebase 封裝（沿用現有） -->
+  <script type="module">
+    import * as F from './js/firebase-config.js?v=20250829a';
+    window.FirebaseAPI = F;
+  </script>
+</head>
+<body>
+  <header class="mobile-header">
+    <div class="logo-area">
+      <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+      <h1>CBON</h1>
+      <p>SpeedTest 紀錄</p>
+    </div>
+  </header>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react" data-plugins="proposal-optional-chaining,proposal-nullish-coalescing-operator">
+    const { useState, useEffect, useMemo } = React;
+
+    function fmtTs(iso){
+      if(!iso) return '-';
+      try { return new Date(iso).toLocaleString(); } catch(_) { return iso; }
+    }
+
+    function toCSV(rows){
+      if(!rows?.length) return '';
+      const headers = ['id','simType','download','ping','upload','region','ts','lat','lng','provider','ua'];
+      const esc = (v)=> {
+        if(v==null) return '';
+        const s = String(v).replace(/"/g,'""');
+        return /[",\n]/.test(s) ? `"${s}"` : s;
+      };
+      const lines = [headers.join(',')].concat(
+        rows.map(r=> headers.map(h=> esc(r[h])).join(','))
+      );
+      return lines.join('\n');
+    }
+
+    function App(){
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const [records, setRecords] = useState([]); // 原始 200 筆
+      const [sim, setSim] = useState('');
+      const [dStart, setDStart] = useState('');
+      const [dEnd, setDEnd] = useState('');
+      const [region, setRegion] = useState('');
+
+      const reload = async ()=>{
+        setLoading(true); setError('');
+        try {
+          const F = window.FirebaseAPI;
+          if(!F) throw new Error('Firebase 未載入');
+          const { db, collection, query, orderBy, limit, getDocs } = F;
+          const q = query(collection(db,'speedtests'), orderBy('ts','desc'), limit(200));
+          const snap = await getDocs(q);
+          const list = [];
+          snap.forEach(doc=> { const d = doc.data(); list.push({ id: doc.id, ...d }); });
+          setRecords(list);
+        } catch (e) {
+          console.error(e); setError(e?.message||'讀取失敗');
+        } finally { setLoading(false); }
+      };
+
+      useEffect(()=>{ reload(); },[]);
+
+      const filtered = useMemo(()=>{
+        let out = records;
+        if(sim) out = out.filter(r=> (r.simType||'') === sim);
+        if(region) out = out.filter(r=> {
+          const v = r.region || '';
+          return region === '新界' ? (v === '新界' || v === '新界/其他') : v === region;
+        });
+        if(dStart){
+          const s = new Date(dStart + 'T00:00:00');
+          out = out.filter(r=> r.ts && new Date(r.ts) >= s);
+        }
+        if(dEnd){
+          const e = new Date(dEnd + 'T23:59:59');
+          out = out.filter(r=> r.ts && new Date(r.ts) <= e);
+        }
+        return out;
+      }, [records, sim, region, dStart, dEnd]);
+
+      const sims = useMemo(()=>{
+        const set = new Set(records.map(r=> r.simType).filter(Boolean));
+        const preset = ['HKSIM','3HK','CMHK','CSL','SmarTone'];
+        const rest = Array.from(set).filter(x=> !preset.includes(x));
+        return [''].concat(preset).concat(rest);
+      }, [records]);
+
+      const regions = ['', '香港島', '九龍', '新界'];
+
+      const exportCSV = ()=>{
+        const csv = toCSV(filtered);
+        if(!csv){ alert('沒有可匯出的資料'); return; }
+        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date();
+        const pad=(n)=> String(n).padStart(2,'0');
+        a.download = `speedtests-${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}.csv`;
+        a.href = url; a.click();
+        setTimeout(()=> URL.revokeObjectURL(url), 1000);
+      };
+
+      const copyLink = async (id)=>{
+        const url = `${location.origin}/speedtest.html?id=${id}`;
+        try { await navigator.clipboard.writeText(url); alert('已複製'); }
+        catch(_) { prompt('複製以下連結：', url); }
+      };
+
+      return (
+        <div className="app">
+          <div className="card">
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+              <h2 style={{margin:0, fontSize:18}}>SpeedTest 紀錄（最近 200 筆）</h2>
+              <span className="badge">{loading? '讀取中…' : `共 ${filtered.length} 筆`}</span>
+            </div>
+            <div className="row">
+              <div>
+                <label>SIM 類型</label>
+                <select value={sim} onChange={e=> setSim(e.target.value)}>
+                  {sims.map((s,i)=> <option key={i} value={s}>{s? s : '全部'}</option>)}
+                </select>
+              </div>
+              <div>
+                <label>地區</label>
+                <select value={region} onChange={e=> setRegion(e.target.value)}>
+                  {regions.map((r,i)=> <option key={i} value={r}>{r? r : '全部'}</option>)}
+                </select>
+              </div>
+              <div>
+                <label>開始日期</label>
+                <input type="date" value={dStart} onChange={e=> setDStart(e.target.value)} />
+              </div>
+              <div>
+                <label>結束日期</label>
+                <input type="date" value={dEnd} onChange={e=> setDEnd(e.target.value)} />
+              </div>
+            </div>
+            <div style={{height:10}} />
+            <div className="row" style={{gap:8}}>
+              <button className="primary-btn" onClick={reload}><i className="fas fa-rotate"></i> 重載最新 200 筆</button>
+              <button className="ghost" onClick={exportCSV}><i className="fas fa-file-csv"></i> 匯出 CSV（目前篩選）</button>
+            </div>
+            {error? <div className="muted" style={{color:'#fca5a5', marginTop:8}}>錯誤：{error}</div> : null}
+          </div>
+
+          <div style={{height:12}} />
+
+          <div className="card" style={{overflowX:'auto'}}>
+            <table>
+              <thead>
+                <tr>
+                  <th className="nowrap">時間</th>
+                  <th className="nowrap">SIM</th>
+                  <th className="nowrap">下載(Mbps)</th>
+                  <th className="nowrap">Ping(ms)</th>
+                  <th className="nowrap">上載(Mbps)</th>
+                  <th className="nowrap">區域</th>
+                  <th className="nowrap">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(r=> (
+                  <tr key={r.id}>
+                    <td className="nowrap">{fmtTs(r.ts)}</td>
+                    <td className="nowrap">{r.simType||'-'}</td>
+                    <td>{r.download ?? '-'}</td>
+                    <td>{r.ping ?? '-'}</td>
+                    <td>{r.upload ?? '-'}</td>
+                    <td className="nowrap">{r.region||'-'}</td>
+                    <td className="nowrap">
+                      <a className="ghost" href={`/speedtest.html?id=${r.id}`} target="_blank" rel="noreferrer">查看</a>
+                      <span> </span>
+                      <button className="ghost" onClick={()=>copyLink(r.id)}>複製連結</button>
+                    </td>
+                  </tr>
+                ))}
+                {!filtered.length && (
+                  <tr><td colSpan="7" className="muted">沒有符合條件的紀錄</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <nav className="bottom-nav-mobile">
+            <a href="https://cbon.shop.sn.cn/#/index" className="nav-btn eshop">
+              <i className="fas fa-shopping-cart"></i>
+              <span>EShop</span>
+            </a>
+            <a href="/codes.html" className="nav-btn topup">
+              <i className="fas fa-credit-card"></i>
+              <span>Code</span>
+            </a>
+            <a href="/ai-chat.html" className="nav-btn ai">
+              <i className="fas fa-robot"></i>
+              <span>AI</span>
+            </a>
+            <a href="/speedtest.html" className="nav-btn" style={{background:'#0ea5e9',color:'#0b1220'}}>
+              <i className="fas fa-gauge"></i>
+              <span>Speed</span>
+            </a>
+            <a href="/account.html" className="nav-btn account">
+              <i className="fas fa-user"></i>
+              <span>會員</span>
+            </a>
+          </nav>
+        </div>
+      );
+    }
+
+    (function(){
+      const rootEl = document.getElementById('root');
+      if(window.ReactDOMClient && ReactDOMClient.createRoot){
+        ReactDOMClient.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.createRoot){
+        ReactDOM.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.render){
+        ReactDOM.render(<App />, rootEl);
+      } else {
+        rootEl.textContent = 'React 尚未載入，請刷新頁面。';
+      }
+    })();
+
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      });
+    }
+  </script>
+</body>
+</html>

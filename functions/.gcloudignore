@@ -1,0 +1,21 @@
+# Files/directories to ignore when deploying Functions source
+# See: https://cloud.google.com/sdk/gcloud/reference/topic/gcloudignore
+
+# VCS
+.git/
+.svn/
+.gitignore
+.gcloudignore
+
+# Dependencies and logs
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+lib/
+
+# Env files (DO NOT DEPLOY SECRETS)
+.env
+.env.*
+.env*

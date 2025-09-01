@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>充值碼購買 - CBON</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="mobile-app">
+    <!-- 頂部 Logo 區 -->
+    <header class="mobile-header">
+      <a href="index.html" class="back-btn-mobile">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div class="logo-area">
+        <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+        <h1>充值碼購買</h1>
+        <p>選擇你要的充值碼類型</p>
+      </div>
+    </header>
+
+    <!-- 充值碼選擇區 -->
+    <main class="codes-section">
+      <div class="codes-grid">
+        <!-- ABC 充值碼 -->
+        <div class="code-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <h3>ABC 充值碼</h3>
+            <p class="card-subtitle">經典款式 • 實惠價格</p>
+            <div class="thumb-container">
+              <img src="images/abc-mobile-prepaid-sim-recharge-voucher-20gb.png" alt="ABC 20GB 充值碼 縮圖" class="thumb-img">
+            </div>
+            <div class="stock-display">
+              <i class="fas fa-box"></i>
+              <span>現貨：</span>
+              <span id="stockAbc" class="stock-count loading">檢查中</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="price-display">
+              <span class="currency">HK$</span>
+              <span class="amount">9</span>
+            </div>
+            <div class="features">
+              <div class="feature-item">
+                <i class="fas fa-star"></i>
+                <span>購買後獲得 9 積分</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-bolt"></i>
+                <span>即買即派 • 快速到賬</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-action">
+            <a href="https://buy.stripe.com/28EbJ1bdHeVN9tecakdwc02" class="buy-btn">
+              <i class="fas fa-shopping-cart"></i>
+              <span>立即購買</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 國際萬能卡 $110 -->
+        <div class="code-card featured">
+          <div class="featured-badge">
+            <i class="fas fa-crown"></i>
+            <span>推薦</span>
+          </div>
+          <div class="card-header">
+            <div class="card-icon premium">
+              <i class="fas fa-gem"></i>
+            </div>
+            <h3>國際萬能卡</h3>
+            <p class="card-subtitle">高額度 • 更划算</p>
+            <div class="thumb-container thumb-110">
+              <img src="images/3hk100.jpeg" alt="國際萬能卡 $110 縮圖" class="thumb-img">
+            </div>
+            <div class="stock-display">
+              <i class="fas fa-box"></i>
+              <span>現貨：</span>
+              <span id="stock110" class="stock-count loading">檢查中</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="price-display">
+              <span class="currency">HK$</span>
+              <span class="amount">82</span>
+            </div>
+            <div class="features">
+              <div class="feature-item">
+                <i class="fas fa-star"></i>
+                <span>購買後獲得 82 積分</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-globe"></i>
+                <span>國際通用 • 萬能支付</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>安全保障 • 品質保證</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-action">
+            <a href="https://buy.stripe.com/dRmdR9a9D291gVGgqAdwc04" class="buy-btn premium">
+              <i class="fas fa-crown"></i>
+              <span>立即購買</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 國際萬能卡 $55 -->
+        <div class="code-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>國際萬能卡 $55</h3>
+            <p class="card-subtitle">中等額度 • 性價比高</p>
+            <div class="thumb-container thumb-55">
+              <img src="images/3HK%2050.jpg" alt="國際萬能卡 $55 縮圖" class="thumb-img">
+            </div>
+            <div class="stock-display">
+              <i class="fas fa-box"></i>
+              <span>現貨：</span>
+              <span id="stock55" class="stock-count loading">檢查中</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="price-display">
+              <span class="currency">HK$</span>
+              <span class="amount">42</span>
+            </div>
+            <div class="features">
+              <div class="feature-item">
+                <i class="fas fa-star"></i>
+                <span>購買後獲得 42 積分</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-mobile-alt"></i>
+                <span>手機充值 • 快速便捷</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-action">
+            <a href="https://buy.stripe.com/dRm14n5TnfZRgVG5LWdwc03" class="buy-btn">
+              <i class="fas fa-shopping-cart"></i>
+              <span>立即購買</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- HK mobile/hemat $20 充值碼 -->
+        <div class="code-card" id="product-20">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>HK mobile/hemat $20 充值碼</h3>
+            <p class="card-subtitle">小額充值 • 經濟實惠</p>
+            <div class="thumb-container thumb-20">
+              <img src="images/hk_mobile_hemat_20.jpg" alt="HK mobile/hemat $20 縮圖" class="thumb-img">
+            </div>
+            <div class="stock-display">
+              <i class="fas fa-box"></i>
+              <span>現貨：</span>
+              <span id="stock20" class="stock-count loading">檢查中</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="price-display">
+              <span class="currency">HK$</span>
+              <span class="amount">19</span>
+            </div>
+            <div class="features">
+              <div class="feature-item">
+                <i class="fas fa-star"></i>
+                <span>購買後獲得 19 積分</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-mobile-alt"></i>
+                <span>手機充值 • 快速便捷</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-action">
+            <a href="https://buy.stripe.com/aFa28r5TnbJBgVG0rCdwc05" class="buy-btn">
+              <i class="fas fa-shopping-cart"></i>
+              <span>立即購買</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 購買提示 -->
+      <div class="purchase-tips">
+        <div class="tips-header">
+          <i class="fas fa-info-circle"></i>
+          <h4>購買說明</h4>
+        </div>
+        <ul class="tips-list">
+          <li><i class="fas fa-shield-alt"></i> 全部採用 Stripe 安全支付系統</li>
+          <li><i class="fas fa-clock"></i> 支付成功後自動派發</li>
+          <li><i class="fas fa-headset"></i> 遇到問題可聯繫 Telegram 或 WhatsApp 客服</li>
+          <li><i class="fas fa-star"></i> 購買即可獲得對應積分回饋</li>
+        </ul>
+      </div>
+    </main>
+
+    <!-- 底部導航 -->
+    <nav class="bottom-nav-mobile">
+      <a href="https://cbon.shop.sn.cn/#/index" class="nav-btn eshop">
+        <i class="fas fa-shopping-cart"></i>
+        <span>EShop</span>
+      </a>
+      <a href="codes.html" class="nav-btn topup active">
+        <i class="fas fa-credit-card"></i>
+        <span>Code</span>
+      </a>
+      <a href="ai-chat.html" class="nav-btn ai">
+        <i class="fas fa-robot"></i>
+        <span>AI</span>
+      </a>
+      <a href="account.html" class="nav-btn account">
+        <i class="fas fa-user"></i>
+        <span>會員</span>
+      </a>
+      <a href="/speedtest.html" class="nav-btn" style="background:#0ea5e9;color:#0b1220;">
+        <i class="fas fa-gauge"></i>
+        <span>Speed</span>
+      </a>
+    </nav>
+  </div>
+
+  <style>
+    .codes-section {
+      padding: 0 15px 100px;
+      min-height: calc(100vh - 120px);
+    }
+
+    .codes-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .code-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .code-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      border-color: #f59e0b;
+    }
+
+    /* 縮圖樣式：完整顯示、等比自適應、保清晰度 */
+    .thumb-container {
+      width: 100%;
+      aspect-ratio: 4 / 3; /* 統一 4:3 比例 */
+      border-radius: 12px;
+      overflow: hidden;
+      background: #ffffff;
+      margin: 12px 0 12px; /* 統一留白 */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* 國際萬能卡專用 4:3 比例 */
+    .thumb-container.thumb-110 { aspect-ratio: 4 / 3; }
+    .thumb-container.thumb-55 { aspect-ratio: 4 / 3; }
+    
+    .thumb-container .thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* 完整顯示，不裁切 */
+      image-rendering: -webkit-optimize-contrast; /* WebKit 優化 */
+      image-rendering: crisp-edges; /* 其他瀏覽器盡量銳利顯示 */
+    }
+
+    .code-card.featured {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      color: white;
+      border-color: #f59e0b;
+    }
+
+    .code-card.featured:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.3);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: -8px;
+      right: 15px;
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    .card-icon.premium {
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    }
+
+    .card-icon.standard {
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    }
+
+    .featured .card-icon {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-header h3 {
+      margin: 0 0 4px;
+      font-size: 1.3em;
+      font-weight: 700;
+    }
+
+    .card-subtitle {
+      margin: 0;
+      font-size: 0.9em;
+      opacity: 0.7;
+    }
+
+    .price-display {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .currency {
+      font-size: 1.2em;
+      font-weight: 600;
+      opacity: 0.8;
+      vertical-align: top;
+    }
+
+    .amount {
+      font-size: 2.5em;
+      font-weight: 800;
+      margin-left: 2px;
+    }
+
+    .features {
+      margin: 20px 0;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.9em;
+    }
+
+    .feature-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .feature-item i {
+      width: 16px;
+      color: #f59e0b;
+      opacity: 0.8;
+    }
+
+    .featured .feature-item i {
+      color: #fbbf24;
+    }
+
+    .card-action {
+      margin-top: 25px;
+    }
+
+    .buy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.05em;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .buy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .buy-btn.premium {
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    }
+
+    .buy-btn.premium:hover {
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .featured .buy-btn {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .featured .buy-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+    }
+
+    .purchase-tips {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .tips-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+      color: #374151;
+    }
+
+    .tips-header h4 {
+      margin: 0;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    .tips-header i {
+      color: #f59e0b;
+    }
+
+    .tips-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .tips-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      color: #6b7280;
+    }
+
+    .tips-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .tips-list i {
+      width: 16px;
+      color: #f59e0b;
+    }
+
+    @media (min-width: 768px) {
+      .codes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+      }
+      .codes-section { padding: 0 30px 100px; }
+      /* 桌面端統一 4:3 */
+      .thumb-container { aspect-ratio: 4 / 3; }
+      .thumb-container.thumb-110 { aspect-ratio: 4 / 3; }
+      .thumb-container.thumb-55 { aspect-ratio: 4 / 3; }
+      .thumb-container.thumb-20 { aspect-ratio: 4 / 3; }
+    }
+  </style>
+
+  <style>
+    /* 即時庫存簡易樣式 */
+    .stock-display { margin-top: 8px; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; }
+    .stock-count.loading { color: #6b7280; }
+    .stock-count.available { color: #16a34a; font-weight: 700; }
+    .stock-count.out-of-stock { color: #dc2626; font-weight: 700; }
+  </style>
+
+  <script>
+    (function() {
+      const stockEls = {
+        abc: document.getElementById('stockAbc'),
+        110: document.getElementById('stock110'),
+        55: document.getElementById('stock55'),
+        20: document.getElementById('stock20')
+      };
+
+      // 允許透過 localStorage 覆蓋 Endpoint（優先使用 CBON_APPS_SCRIPT_URL，其次 APPS_SCRIPT_ENDPOINT）
+      const DEFAULT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwhdaWJHQV9sEbcNUP9bQmjjxYTk0HdNif_QKEqunp6fQfyufGiax14l2H36kpBssvyPQ/exec';
+      const params = new URLSearchParams(location.search);
+      const endpointFromQuery = params.get('endpoint');
+      if (endpointFromQuery) {
+        try {
+          localStorage.setItem('CBON_APPS_SCRIPT_URL', endpointFromQuery);
+          localStorage.setItem('APPS_SCRIPT_ENDPOINT', endpointFromQuery);
+          console.log('[Stock] Endpoint overridden via query:', endpointFromQuery);
+        } catch (_) {}
+      }
+      const APPS_SCRIPT_ENDPOINT = (typeof localStorage !== 'undefined' && (
+        localStorage.getItem('CBON_APPS_SCRIPT_URL') || localStorage.getItem('APPS_SCRIPT_ENDPOINT')
+      )) || DEFAULT_ENDPOINT;
+      
+      // 新增：可選代理層（?use_proxy=1 啟用），用於本地預覽繞過 ORB/CORS
+      const useProxy = params.get('use_proxy') === '1';
+      const PROXY_PREFIX = useProxy ? 'http://localhost:3001/proxy' : '';
+
+      async function updateStock(productId, elId) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        try {
+          el.textContent = '檢查中';
+          el.classList.remove('available', 'out-of-stock');
+          el.classList.add('loading');
+
+          // 統一使用同源 API，若本地開啟 use_proxy，改走本地代理 -> Apps Script
+          let url;
+          if (useProxy) {
+            url = `${PROXY_PREFIX}?action=check_stock&productId=${encodeURIComponent(productId)}&origin=${encodeURIComponent(location.origin)}&_=${Date.now()}`;
+          } else {
+            url = `/api/stock?productId=${encodeURIComponent(productId)}&_=${Date.now()}`;
+          }
+          const response = await fetch(url, { method: 'GET', cache: 'no-cache' });
+          const data = await response.json();
+
+          console.log('[Stock] productId', productId, '->', data);
+          el.classList.remove('loading');
+          
+          if (data && data.ok) {
+            el.textContent = `${data.count} 組`;
+            if (Number(data.count) > 0) {
+              el.classList.add('available');
+            } else {
+              el.classList.add('out-of-stock');
+            }
+          } else {
+            el.textContent = '—';
+            console.warn('[Stock] API returned error:', data && data.error);
+          }
+        } catch (err) {
+          console.error('[Stock] API fetch failed:', productId, err);
+          el.classList.remove('loading');
+          el.textContent = '錯誤';
+        }
+      }
+
+      function refreshAll() {
+        updateStock('abc', 'stockAbc');
+        updateStock('110', 'stock110');
+        updateStock('55', 'stock55');
+        updateStock('20', 'stock20');
+      }
+
+      // 初次載入
+      window.addEventListener('load', refreshAll);
+      // 如需自動刷新，可開啟下行（每 60 秒更新一次）
+      // setInterval(refreshAll, 60000);
+    })();
+  </script>
+
+</body>
+</html>

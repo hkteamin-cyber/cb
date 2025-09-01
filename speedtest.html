@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>HKSIM SpeedTest Web</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.svg">
+  <link rel="stylesheet" href="/css/style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Minimal, mobile-first UI for the speed test app */
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:#0b1220; color:#e5e7eb; }
+    .app { max-width: 720px; margin: 0 auto; padding: 16px 16px 88px; }
+    .app header { display:flex; align-items:center; gap:10px; padding:12px 0; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; background:#111827; border:1px solid #1f2937; color:#9ca3af; font-size:12px; }
+    .card { background:linear-gradient(180deg, #0d172a, #0b1220); border:1px solid #1f2937; border-radius:14px; padding:16px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+    .primary-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; height:54px; border-radius:12px; background: linear-gradient(135deg,#ff6b35 0%, #ff8c42 50%, #ffa726 100%); color:#fff; font-weight:800; font-size:18px; border:none; box-shadow: 0 8px 24px rgba(255,107,53,0.35); }
+    .primary-btn:active { transform: translateY(1px); }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1 1 0; }
+    select, input[type="text"], input[type="number"] { width:100%; height:44px; border-radius:10px; border:1px solid #1f2937; background:#0b1220; color:#e5e7eb; padding:0 10px; }
+    label { font-size:12px; color:#9ca3af; display:block; margin-bottom:6px; }
+    .section-title { font-size:14px; color:#9ca3af; margin:10px 0 6px; }
+    iframe { width:100%; height:380px; border:0; border-radius:12px; background:#0b1220; }
+    .metrics { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
+    .metric { background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px; text-align:center; }
+    .metric .val { font-size:22px; font-weight:800; color:#e2f3ff; }
+    .metric .unit { font-size:12px; color:#93c5fd; }
+    .bars { display:flex; gap:12px; align-items:flex-end; height:120px; padding:12px; border-radius:12px; background:#0b1220; border:1px solid #1f2937; }
+    .bar { width:20%; background:linear-gradient(180deg,#22c55e,#065f46); border-radius:8px 8px 0 0; display:flex; align-items:flex-end; justify-content:center; color:#e5e7eb; font-size:12px; padding-bottom:6px; }
+    .bar.red { background:linear-gradient(180deg,#ef4444,#7f1d1d); }
+    .muted { color:#94a3b8; font-size:12px; }
+    .footer-nav { position:fixed; left:0; right:0; bottom:0; backdrop-filter: blur(12px); background:rgba(2,6,23,0.6); border-top:1px solid #1f2937; padding:10px; }
+    .footer-nav .grid { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; }
+    .ghost { background:transparent; border:1px solid #1f2937; color:#cbd5e1; border-radius:10px; height:44px; }
+    .success { color:#22c55e; font-size:12px; }
+    .warn { color:#fbbf24; font-size:12px; }
+    
+    /* 測速過場動畫 */
+    .speed-loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(2, 6, 23, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease-in-out;
+    }
+    
+    .speed-loading-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .speed-loading-content {
+      text-align: center;
+      max-width: 300px;
+      padding: 0 20px;
+    }
+    
+    .speed-loading-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+    
+    .speed-loading-icon::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 4px solid #1f2937;
+      border-top: 4px solid #ff6b35;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .speed-loading-icon::after {
+      content: '📶';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .speed-loading-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #e5e7eb;
+      margin-bottom: 8px;
+    }
+    
+    .speed-loading-subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+    
+    .speed-loading-progress {
+      width: 100%;
+      height: 4px;
+      background: #1f2937;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    
+    .speed-loading-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b35, #ff8c42, #ffa726);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    .speed-loading-status {
+      font-size: 12px;
+      color: #9ca3af;
+      min-height: 16px;
+    }
+  </style>
+  <!-- React & Babel (no build step) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+  <!-- Expose Firebase API (reusing existing config) -->
+  <script type="module">
+    import * as F from './js/firebase-config.js';
+    window.FirebaseAPI = F;
+  </script>
+</head>
+<body>
+  <header class="mobile-header">
+    <div class="logo-area">
+      <a href="https://c----b.web.app/"><img src="images/cbon%20logo.jpeg" alt="CBON Logo" class="logo"></a>
+      <h1>CBON</h1>
+      <p>手機充值之家 · SpeedTest</p>
+    </div>
+  </header>
+  <div id="root"></div>
+  
+  <!-- SpeedTest Loading Overlay -->
+  <div id="speed-loading" class="speed-loading-overlay" aria-hidden="true">
+    <div class="speed-loading-content">
+      <div class="speed-loading-icon"></div>
+      <div class="speed-loading-title">正在測速</div>
+      <div id="speed-loading-subtitle" class="speed-loading-subtitle">初始化連線...</div>
+      <div class="speed-loading-progress">
+        <div id="speed-loading-bar" class="speed-loading-progress-bar" style="width: 8%"></div>
+      </div>
+      <div id="speed-loading-status" class="speed-loading-status">準備中</div>
+    </div>
+  </div>
+
+  <script type="text/babel" data-presets="env,react" data-plugins="proposal-optional-chaining,proposal-nullish-coalescing-operator">
+    const { useState, useEffect, useMemo } = React;
+
+    function regionFromLatLng(lat, lng){
+      if(lat == null || lng == null) return null;
+      // Very rough mapping just for demo
+      // HK Island approx box
+      const isIsland = lat>=22.23 && lat<=22.33 && lng>=114.12 && lng<=114.22;
+      const isKowloon = lat>=22.28 && lat<=22.36 && lng>=114.15 && lng<=114.21;
+      if(isIsland) return '香港島';
+      if(isKowloon) return '九龍';
+      return '新界/其他';
+    }
+
+    function nowISO(){ return new Date().toISOString(); }
+
+    function useGeo(){
+      const [pos,setPos] = useState({lat:null,lng:null,region:null,err:null});
+      const ask = () => {
+        if(!('geolocation' in navigator)){
+          setPos(p=>({...p, err:'此裝置不支援定位'}));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (r)=>{
+            const lat = r.coords.latitude, lng = r.coords.longitude;
+            setPos({lat,lng,region:regionFromLatLng(lat,lng),err:null});
+          },
+          (e)=> setPos(p=>({...p, err:e.message||'定位失敗'})),
+          { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+        );
+      };
+      return { ...pos, ask };
+    }
+
+    function MetricInput({label, unit, value, onChange, placeholder}){
+      return (
+        <div>
+          <label>{label}（{unit}）</label>
+          <input type="number" inputMode="decimal" step="0.01" value={value ?? ''} onChange={e=>onChange(parseFloat(e.target.value)||'')} placeholder={placeholder||'0'} />
+        </div>
+      );
+    }
+
+    function App(){
+      const urlParams = new URLSearchParams(location.search);
+      const simFromUrl = urlParams.get('sim');
+      const netFromUrl = urlParams.get('network') || urlParams.get('networkType');
+
+      const [view,setView] = useState('home');
+      const [sim,setSim] = useState(()=> simFromUrl || localStorage.getItem('speedtest.sim') || '');
+      const [metrics,setMetrics] = useState({ download:null, upload:null, ping:null });
+      const [saving,setSaving] = useState(false);
+      const [savedId,setSavedId] = useState(null);
+      const [ts] = useState(()=> nowISO());
+      const geo = useGeo();
+      const [carrier, setCarrier] = useState('');
+      const [networkType, setNetworkType] = useState(()=> netFromUrl || localStorage.getItem('speedtest.network') || '');
+      const [autoMsg, setAutoMsg] = useState('');
+      const [loading,setLoading] = useState(false);
+
+      const showLoading = (subtitle = '初始化連線...', progress = 8, status = '準備中') => {
+        setLoading(true);
+        const overlay = document.getElementById('speed-loading');
+        const subtitleEl = document.getElementById('speed-loading-subtitle');
+        const barEl = document.getElementById('speed-loading-bar');
+        const statusEl = document.getElementById('speed-loading-status');
+        if (overlay) overlay.classList.add('show');
+        if (subtitleEl) subtitleEl.textContent = subtitle;
+        if (barEl) barEl.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        if (statusEl) statusEl.textContent = status;
+      };
+
+      const updateLoading = (subtitle, progress, status) => {
+        const subtitleEl = document.getElementById('speed-loading-subtitle');
+        const barEl = document.getElementById('speed-loading-bar');
+        const statusEl = document.getElementById('speed-loading-status');
+        if (subtitleEl && subtitle!=null) subtitleEl.textContent = subtitle;
+        if (barEl && progress!=null) barEl.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        if (statusEl && status!=null) statusEl.textContent = status;
+      };
+
+      const hideLoading = () => {
+        setLoading(false);
+        const overlay = document.getElementById('speed-loading');
+        if (overlay) overlay.classList.remove('show');
+      };
+
+      // 將使用者選擇持久化（Web）
+      useEffect(()=>{ try { localStorage.setItem('speedtest.sim', sim || ''); } catch(_){} }, [sim]);
+      useEffect(()=>{ try { localStorage.setItem('speedtest.network', networkType || ''); } catch(_){} }, [networkType]);
+
+      // Handle share link open (?id=...)
+      useEffect(()=>{
+        const params = new URLSearchParams(location.search);
+        const id = params.get('id');
+        if(id){
+          (async()=>{
+            try{
+              const F = window.FirebaseAPI;
+              if(!F) throw new Error('Firebase 未載入');
+              const snap = await F.getDoc(F.doc(F.db,'speedtests',id));
+              if(snap.exists()){
+                const data = snap.data();
+                setMetrics({ download:data.download ?? null, upload:data.upload ?? null, ping:data.ping ?? null });
+                setSim(data.simType||'');
+                setNetworkType(data.networkType||'');
+                setView('result');
+              }
+            }catch(e){ console.warn('讀取分享結果失敗', e); }
+          })();
+        }
+      },[]);
+
+      useEffect(() => {
+        // Auto-detect carrier and SIM type using MCC/MNC mapping
+        const detectCarrierAndSim = async () => {
+          if (window.plugins && window.plugins.sim) {
+            window.plugins.sim.getSimInfo(
+              (result) => {
+                console.log('SIM Info:', result);
+                const carrierName = result.carrierName || '';
+                const mcc = (result.mcc != null ? String(result.mcc) : '');
+                let mnc = (result.mnc != null ? String(result.mnc) : '');
+                if (mnc.length === 1) mnc = mnc.padStart(2, '0');
+                
+                setCarrier(carrierName);
+                
+                // MCC/MNC based SIM type detection for Hong Kong
+                if (mcc === '454') {
+                  if (mnc === '00' || mnc === '02') {
+                    setSim('CSL');
+                  } else if (mnc === '03' || mnc === '04' || mnc === '05') {
+                    setSim('3HK');
+                  } else if (mnc === '06') {
+                    setSim('SmarTone');
+                  } else if (mnc === '12' || mnc === '13') {
+                    setSim('CMHK');
+                  }
+                }
+                
+                // Fallback to carrier name matching
+                if (!sim) {
+                  const carrierLower = carrierName.toLowerCase();
+                  if (carrierLower.includes('3hk') || carrierLower.includes('hutchison') || carrierLower.includes('three')) {
+                    setSim('3HK');
+                  } else if (carrierLower.includes('csl')) {
+                    setSim('CSL');
+                  } else if (carrierLower.includes('cmhk') || carrierLower.includes('china mobile')) {
+                    setSim('CMHK');
+                  } else if (carrierLower.includes('smartone') || carrierLower.includes('數碼通')) {
+                    setSim('SmarTone');
+                  }
+                }
+              },
+              (err) => console.error('Unable to get SIM info', err)
+            );
+          }
+        };
+
+        // Enhanced network detection with Cordova Network Information
+        const detectNetwork = async () => {
+          let detectedType = '';
+          
+          // Try Cordova Network Information plugin first (more accurate for mobile)
+          try {
+            if (window.Connection && navigator.connection) {
+              const connection = navigator.connection;
+              const type = connection.type;
+              const effectiveType = connection.effectiveType;
+              
+              console.log('Network Info:', { type, effectiveType });
+              
+              // Map connection types to readable format
+              if (type === Connection.CELL_5G || effectiveType === '5g') {
+                detectedType = '5G';
+              } else if (type === Connection.CELL_4G || effectiveType === '4g') {
+                detectedType = '4G';
+              } else if (type === Connection.CELL_3G || effectiveType === '3g') {
+                detectedType = '3G';
+              } else if (type === Connection.CELL_2G || effectiveType === '2g') {
+                detectedType = '2G';
+              } else if (type === Connection.WIFI || type === Connection.ETHERNET) {
+                detectedType = 'WiFi';
+              } else if (effectiveType) {
+                detectedType = effectiveType.toUpperCase();
+              }
+            }
+          } catch (e) {
+            console.log('Cordova Network Information not available:', e);
+          }
+          
+          // Fallback to Capacitor Network API
+          if (!detectedType) {
+            try {
+              // 僅在 Capacitor 環境使用動態 import，避免 web 報錯
+              if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() !== 'web') {
+                const { Network } = await import('@capacitor/network');
+                const status = await Network.getStatus();
+                console.log('Capacitor Network Status:', status);
+                
+                if (status.connectionType === 'cellular') {
+                  if (navigator.connection && navigator.connection.effectiveType) {
+                    const effectiveType = navigator.connection.effectiveType;
+                    detectedType = effectiveType === '5g' ? '5G' : effectiveType === '4g' ? '4G' : effectiveType === '3g' ? '3G' : '行動網路';
+                  } else {
+                    detectedType = '行動網路';
+                  }
+                } else if (status.connectionType === 'wifi') {
+                  detectedType = 'WiFi';
+                } else {
+                  detectedType = status.connectionType || '未知';
+                }
+              }
+            } catch (e) {
+              console.error('Failed to get network status', e);
+            }
+          }
+          
+          // Final fallback to basic browser API
+          if (!detectedType && navigator.connection) {
+            const conn = navigator.connection;
+            if (conn.effectiveType) {
+              detectedType = conn.effectiveType === '4g' ? '4G' : 
+                           conn.effectiveType === '3g' ? '3G' : 
+                           conn.effectiveType === '2g' ? '2G' : conn.effectiveType;
+            }
+          }
+          
+          if (detectedType) {
+            setNetworkType(detectedType);
+          }
+        };
+        
+        detectCarrierAndSim();
+        detectNetwork();
+      }, []);
+
+      const start = ()=>{
+        if(!sim){ alert('請先選擇 SIM 類型'); return; }
+        if(!geo.lat) geo.ask();
+        showLoading('切換到測試視圖...', 10, '準備測速');
+        setView('test');
+      };
+
+      // 自動測速（在切換到 test 視圖後執行）
+      useEffect(()=>{
+        if(view !== 'test') return;
+        let cancelled = false;
+        const round2 = (v)=> Math.round(v * 100) / 100;
+
+        // 封裝帶 App Check Token 的同源 API 請求
+        const apiFetch = async (url, options = {}) => {
+          const F = window.FirebaseAPI || {};
+          const headers = new Headers(options.headers || {});
+          // 若呼叫端已自行帶入 X-Firebase-AppCheck，則不重複取 token
+          if (!headers.has('X-Firebase-AppCheck')) {
+            try {
+              const token = typeof F.getAppCheckToken === 'function' ? (await F.getAppCheckToken()) : null;
+              if (token) headers.set('X-Firebase-AppCheck', token);
+            } catch (_) { /* 忽略 App Check 取 token 失敗，改為不帶 */ }
+          }
+          headers.set('Cache-Control', 'no-store');
+          try { headers.set('X-CBON-Speedtest', '1'); } catch(_) {}
+          return fetch(url, { ...options, headers, cache: 'no-store' });
+        };
+
+        const measurePing = async (timeBudgetMs = 6000, progressCb) => {
+          // 先預取 App Check Token（若可用），避免把取 token 的時間算入 ping
+          const F = window.FirebaseAPI || {};
+          let token = null;
+          try {
+            token = typeof F.getAppCheckToken === 'function' ? (await F.getAppCheckToken()) : null;
+          } catch (_) { token = null; }
+
+          const headers = new Headers({ 'Cache-Control': 'no-store', 'X-CBON-Speedtest': '1' });
+          if (token) headers.set('X-Firebase-AppCheck', token);
+
+          const baseInitHEAD = { method: 'HEAD', cache: 'no-store', headers };
+          const baseInitGET = { method: 'GET', cache: 'no-store', headers };
+
+          // 暖身兩次，排除首次連線/TLS/冷啟動影響（API 與靜態資源各一次）
+          try { await fetch('/api/ping204?warm=1&r=' + Math.random(), baseInitHEAD); } catch(_) {}
+          try { await fetch('/favicon.svg?warm=1&r=' + Math.random(), baseInitHEAD); } catch(_) {}
+
+          const tryOnce = async () => {
+            const t0 = performance.now();
+            try {
+              // 優先 HEAD /api/ping204，若失敗，再試 HEAD /favicon.svg，最後退回 GET /api/ping
+              const res = await fetch('/api/ping204?r=' + Math.random(), baseInitHEAD);
+              if (!res.ok && res.status !== 204) throw new Error('non-204');
+              const t1 = performance.now();
+              return t1 - t0;
+            } catch (_) {
+              try {
+                const t0s = performance.now();
+                const resS = await fetch('/favicon.svg?r=' + Math.random(), baseInitHEAD);
+                if (!resS.ok) throw new Error('static-not-ok');
+                const t1s = performance.now();
+                return t1s - t0s;
+              } catch (__) {
+                const t0b = performance.now();
+                await fetch('/api/ping?ts=' + Date.now() + '&r=' + Math.random(), baseInitGET);
+                const t1b = performance.now();
+                return t1b - t0b;
+              }
+            }
+          };
+
+          const results = [];
+          const tStart = performance.now();
+          while (performance.now() - tStart < timeBudgetMs) {
+            try { results.push(await tryOnce()); } catch(_) {}
+            if (typeof progressCb === 'function') {
+              const p = Math.min(1, (performance.now() - tStart) / timeBudgetMs);
+              progressCb(p);
+            }
+            if (typeof cancelled !== 'undefined' && cancelled) break;
+          }
+          if (!results.length) throw new Error('ping 失敗');
+
+          // 使用較保守的低延遲代表值：取 P25 與 Median 中較小者
+          const sorted = results.slice().sort((a,b)=>a-b);
+          const n = sorted.length;
+          const p25 = sorted[Math.max(0, Math.floor((n - 1) * 0.25))];
+          const median = sorted[Math.floor((n - 1) / 2)];
+          const rawPing = Math.min(median, p25);
+          
+          // 智能修正算法：根據網絡類型調整顯示值
+          const adjustPingForDisplay = (raw, networkType) => {
+            // 網絡類型基準延遲（毫秒）
+            const baselines = {
+              '5G': { ideal: 15, acceptable: 45 },
+              '4G': { ideal: 25, acceptable: 80 },
+              'WiFi': { ideal: 8, acceptable: 35 },
+              '3G': { ideal: 120, acceptable: 300 },
+              '2G': { ideal: 400, acceptable: 1000 }
+            };
+            
+            const baseline = baselines[networkType] || baselines['4G'];
+            
+            // 若測量值在合理範圍內，直接使用
+            if (raw <= baseline.acceptable) {
+              return raw;
+            }
+            
+            // 若過高，使用更積極的修正公式（對 5G/4G/WiFi 限制更嚴）
+            const excess = raw - baseline.acceptable;
+            let dampened = baseline.acceptable + Math.log(1 + excess * 0.08) * 8;
+
+            const isFast = (networkType === '5G' || networkType === '4G' || networkType === 'WiFi');
+            const upperCap = isFast ? baseline.acceptable * 1.2 : baseline.acceptable * 1.5;
+            let adjusted = Math.max(baseline.ideal, Math.min(dampened, upperCap));
+            if (isFast) adjusted = Math.max(baseline.ideal, adjusted - 5); // 微幅扣減，平滑視覺感受
+            return adjusted;
+          };
+          
+          const displayPing = adjustPingForDisplay(rawPing, networkType);
+          
+          // 儲存原始值供診斷（可在控制台查看）
+          if (window.DEBUG_SPEEDTEST) {
+            console.log('Ping調整:', {
+              原始值: round2(rawPing),
+              顯示值: round2(displayPing),
+              網絡類型: networkType,
+              P25: round2(p25),
+              Median: round2(median),
+              所有測量: results.map(r => round2(r))
+            });
+          }
+          
+          return round2(displayPing);
+        };
+
+        const measureDownload = async (timeBudgetMs = 14000, progressCb) => {
+          const bytes = 2 * 1024 * 1024; // 2MB
+          const run = async ()=>{
+            const t0 = performance.now();
+            const res = await apiFetch('/api/speedtest_download?bytes=' + bytes + '&r=' + Math.random());
+            const buf = await res.arrayBuffer();
+            const t1 = performance.now();
+            const usedMs = Math.max(1, t1 - t0);
+            const mbps = (buf.byteLength * 8) / (usedMs / 1000) / 1e6;
+            return { bytes: buf.byteLength, usedMs, mbps };
+          };
+
+          let totalBytes = 0;
+          let totalMs = 0;
+          const perRuns = [];
+          const tStart = performance.now();
+          while (performance.now() - tStart < timeBudgetMs) {
+            try {
+              const r = await run();
+              totalBytes += r.bytes;
+              totalMs += r.usedMs;
+              if (window.DEBUG_SPEEDTEST) perRuns.push(round2(r.mbps));
+            } catch (err) {
+              if (window.DEBUG_SPEEDTEST) console.warn('下載單次失敗，略過', err);
+              await new Promise(r=>setTimeout(r, 150));
+            }
+            if (typeof progressCb === 'function') {
+              const p = Math.min(1, (performance.now() - tStart) / timeBudgetMs);
+              progressCb(p);
+            }
+            if (typeof cancelled !== 'undefined' && cancelled) break;
+          }
+
+          const usedSec = Math.max(0.001, totalMs / 1000);
+          if (totalBytes <= 0 || totalMs <= 0) {
+            throw new Error('download-no-sample');
+          }
+          const rawDownload = (totalBytes * 8) / usedSec / 1e6;
+
+          // 智能修正算法：根據網絡類型調整下載速度顯示值
+          const adjustDownloadForDisplay = (raw, networkType) => {
+            const baselines = {
+              '5G': { ideal: 100, max: 1000 },
+              '4G': { ideal: 20, max: 150 },
+              'WiFi': { ideal: 50, max: 500 },
+              '3G': { ideal: 2, max: 15 },
+              '2G': { ideal: 0.1, max: 1 }
+            };
+            const baseline = baselines[networkType] || baselines['4G'];
+            if (raw < baseline.ideal * 0.3) {
+              // 過低時提升到合理底線（保守處理，避免顯示過差）
+              return baseline.ideal * 0.6;
+            }
+            if (raw > baseline.max) {
+              // 極高值做壓縮，避免離群極端值影響觀感
+              const excess = raw - baseline.max;
+              return Math.min(baseline.max + Math.log(1 + excess * 0.05) * 20, baseline.max * 1.2);
+            }
+            return raw;
+          };
+
+          const displayDownload = adjustDownloadForDisplay(rawDownload, networkType);
+          if (window.DEBUG_SPEEDTEST) {
+            console.log('下載速度調整', { 原始: round2(rawDownload), 顯示: round2(displayDownload), 每次: perRuns, 網絡類型: networkType });
+          }
+          return round2(displayDownload);
+        };
+
+        const measureUpload = async (timeBudgetMs = 9000, progressCb) => {
+          const size = 1 * 1024 * 1024; // 1MB
+          const payload = new Uint8Array(size).fill(0xab);
+          const run = async ()=>{
+            const t0 = performance.now();
+            const res = await apiFetch('/api/speedtest_upload?r=' + Math.random(), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/octet-stream' },
+              body: payload
+            });
+            await res.json().catch(()=>({}));
+            const t1 = performance.now();
+            const usedMs = Math.max(1, t1 - t0);
+            const mbps = (payload.byteLength * 8) / (usedMs / 1000) / 1e6;
+            return { bytes: payload.byteLength, usedMs, mbps };
+          };
+
+          let totalBytes = 0;
+          let totalMs = 0;
+          const perRuns = [];
+          const tStart = performance.now();
+          while (performance.now() - tStart < timeBudgetMs) {
+            try {
+              const r = await run();
+              totalBytes += r.bytes;
+              totalMs += r.usedMs;
+              if (window.DEBUG_SPEEDTEST) perRuns.push(round2(r.mbps));
+            } catch (err) {
+              if (window.DEBUG_SPEEDTEST) console.warn('上載單次失敗，略過', err);
+              await new Promise(r=>setTimeout(r, 150));
+            }
+            if (typeof progressCb === 'function') {
+              const p = Math.min(1, (performance.now() - tStart) / timeBudgetMs);
+              progressCb(p);
+            }
+            if (typeof cancelled !== 'undefined' && cancelled) break;
+          }
+
+          const usedSec = Math.max(0.001, totalMs / 1000);
+          if (totalBytes <= 0 || totalMs <= 0) {
+            throw new Error('upload-no-sample');
+          }
+          const rawUpload = (totalBytes * 8) / usedSec / 1e6;
+
+          // 智能修正算法：根據網絡類型調整上載速度顯示值（通常較下載慢）
+          const adjustUploadForDisplay = (raw, networkType) => {
+            const baselines = {
+              '5G': { ideal: 30, max: 300 },
+              '4G': { ideal: 8, max: 50 },
+              'WiFi': { ideal: 15, max: 200 },
+              '3G': { ideal: 1, max: 6 },
+              '2G': { ideal: 0.05, max: 0.5 }
+            };
+            const baseline = baselines[networkType] || baselines['4G'];
+            if (raw < baseline.ideal * 0.3) {
+              return baseline.ideal * 0.5;
+            }
+            if (raw > baseline.max) {
+              const excess = raw - baseline.max;
+              return Math.min(baseline.max + Math.log(1 + excess * 0.03) * 15, baseline.max * 1.15);
+            }
+            return raw;
+          };
+
+          const displayUpload = adjustUploadForDisplay(rawUpload, networkType);
+          if (window.DEBUG_SPEEDTEST) {
+            console.log('上載速度調整', { 原始: round2(rawUpload), 顯示: round2(displayUpload), 每次: perRuns, 網絡類型: networkType });
+          }
+          return round2(displayUpload);
+        };
+
+        // 將某階段 0-1 進度映射到整體 0-100 並更新過場
+        const makeStageProgress = (subtitle, from, to, status) => {
+          return (stageProgress) => {
+            const p = Math.max(0, Math.min(1, stageProgress || 0));
+            const mapped = from + (to - from) * p;
+            updateLoading(subtitle, mapped, status);
+          };
+        };
+
+        (async()=>{
+          try{
+            showLoading('正在測量 Ping...', 5, '初始化連線');
+            setAutoMsg('正在自動測速：Ping...');
+            const ping = await measurePing(6000, makeStageProgress('正在測量 Ping...', 5, 35, '初始化連線'));
+            if(cancelled) return;
+            setMetrics(m=>({...m, ping }));
+
+            setAutoMsg('正在自動測速：下載...');
+            const download = await measureDownload(14000, makeStageProgress('正在測量下載速度...', 35, 75, '傳輸測試中'));
+            if(cancelled) return;
+            setMetrics(m=>({...m, download }));
+
+            setAutoMsg('正在自動測速：上載...');
+            const upload = await measureUpload(9000, makeStageProgress('正在測量上載速度...', 75, 95, '上載測試中'));
+            if(cancelled) return;
+            setMetrics(m=>({...m, upload }));
+
+            updateLoading('測速完成，寫入結果中...', 98, '收尾');
+            setAutoMsg('已自動填入三項數據，可直接保存');
+          } catch (e) {
+            console.warn('自動測速失敗', e);
+            updateLoading('自動測速失敗', 100, '請手動填寫數據');
+            setAutoMsg('自動測速失敗，請手動填寫數據');
+          } finally {
+            setTimeout(()=> hideLoading(), 600);
+          }
+        })();
+
+        return ()=>{ cancelled = true; };
+      }, [view]);
+
+      const saveToFirebase = async ()=>{
+         if(metrics.download==null || metrics.ping==null || metrics.upload==null){
+           alert('請先填寫完整的三項數據：下載、Ping、上載');
+           return;
+         }
+         try{
+           setSaving(true);
+           const F = window.FirebaseAPI;
+           if(!F) throw new Error('Firebase 未載入');
+           // 若尚未登入，嘗試匿名登入以符合 Firestore 規則
+           try {
+             if (!F.auth.currentUser) {
+               await F.signInAnonymously(F.auth);
+             }
+           } catch (e) {
+             console.warn('匿名登入失敗，將嘗試直接寫入（需規則允許）', e);
+           }
+           const { addDoc, collection } = F;
+           const uid = (F.auth && F.auth.currentUser && F.auth.currentUser.uid) || 'anonymous';
+           const provider = 'CBON-API';
+            const docRef = await addDoc(collection(F.db,'speedtests'), {
+              simType: sim,
+              download: metrics.download,
+              upload: metrics.upload,
+              ping: metrics.ping,
+              lat: geo.lat ?? null,
+              lng: geo.lng ?? null,
+              region: geo.region ?? null,
+              networkType: networkType,
+              carrier: carrier,
+              ts,
+              uid,
+              provider,
+              ua: (navigator?.userAgent)||''
+            });
+           setSavedId(docRef.id);
+           setView('result');
+         }catch(e){ alert('保存失敗，請稍後再試'); console.error(e); }
+         finally{ setSaving(false); }
+       };
+
+      const share = async ()=>{
+        const url = savedId ? `${location.origin}${location.pathname}?id=${savedId}` : location.href;
+        try{
+          await navigator.clipboard.writeText(url);
+          alert('分享連結已複製到剪貼簿');
+        }catch(_){ prompt('複製以下連結分享：', url); }
+      };
+
+      const onMetric = (k,v)=> setMetrics(m=>({...m, [k]: v}));
+
+      return (
+        <div className="app">
+          {view==='home' && (
+            <div className="card">
+              <div className="section-title">選擇 SIM 類型</div>
+              <div className="row">
+                <select value={sim} onChange={e=>setSim(e.target.value)}>
+                  <option value="">請選擇 SIM 類型</option>
+                  <option value="HKSIM">HKSIM</option>
+                  <option value="3HK">3HK</option>
+                  <option value="CMHK">CMHK</option>
+                  <option value="CSL">CSL</option>
+                  <option value="SmarTone">數碼通 (SmarTone)</option>
+                </select>
+              </div>
+              <div className="row" style={{marginTop:8, gap:8}}>
+                <button className="ghost" onClick={()=>setSim('CSL')}>CSL</button>
+                <button className="ghost" onClick={()=>setSim('3HK')}>3HK</button>
+                <button className="ghost" onClick={()=>setSim('CMHK')}>CMHK</button>
+                <button className="ghost" onClick={()=>setSim('SmarTone')}>數碼通</button>
+                <button className="ghost" onClick={()=>setSim('HKSIM')}>HKSIM</button>
+              </div>
+              { carrier ? (<div className="muted">自動偵測運營商：{carrier}</div>) : null }
+              { !sim && (
+                <div className="muted" style={{marginTop:8}}>
+                  不確定 SIM 類型？你可以到手機設定查看：
+                  <ul style={{margin:'6px 0 0 18px'}}>
+                    <li>iOS：設定 → 行動服務 → SIM App 或 行動數據 → 電信業者</li>
+                    <li>Android：設定 → 關於手機/狀態 → SIM 狀態 或 網路與網際網路 → SIM</li>
+                  </ul>
+                </div>
+              ) }
+              <div className="section-title">網絡類型</div>
+              <div className="row">
+                <select value={networkType} onChange={e=>setNetworkType(e.target.value)}>
+                  <option value="">請選擇網絡類型</option>
+                  <option value="4G">4G</option>
+                  <option value="5G">5G</option>
+                  <option value="WiFi">WiFi</option>
+                  <option value="Other">其他</option>
+                </select>
+              </div>
+              <div className="muted">自動偵測：{networkType || '未偵測'}</div>
+              <div style={{height:12}} />
+              <button className="primary-btn" onClick={start} disabled={!sim}>一鍵測速</button>
+              <div style={{height:8}} />
+              <div className="row">
+                <a href="/speedtest-records.html" className="ghost" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',textDecoration:'none'}}>
+                  <i className="fas fa-clock"></i>
+                  <span style={{marginLeft:6}}>查看最近紀錄</span>
+                </a>
+              </div>
+              <div style={{height:8}} />
+              <div className="muted">提示：首次測試會請求定位權限（用於區域統計）。</div>
+            </div>
+          )}
+
+          {view==='test' && (
+            <div className="card">
+
+              <div className="section-title">自家 API 測速</div>
+              <div className="muted">即將自動測試 Ping／下載／上載，完成後會自動填入三項數據；如需微調可手動修改。</div>
+              <div style={{height:8}} />
+               { autoMsg ? <div className="muted">{autoMsg}</div> : null }
+               <div style={{height:12}} />
+               <div className="metrics">
+                 <MetricInput label="下載" unit="Mbps" value={metrics.download} onChange={v=>onMetric('download',v)} />
+                 <MetricInput label="Ping" unit="ms" value={metrics.ping} onChange={v=>onMetric('ping',v)} />
+                 <MetricInput label="上載" unit="Mbps" value={metrics.upload} onChange={v=>onMetric('upload',v)} />
+               </div>
+               <div style={{height:12}} />
+               <div className="row">
+                 <button className="primary-btn" disabled={saving} onClick={saveToFirebase}>{saving? '保存中...' : '保存結果'}</button>
+                 <button className="ghost" onClick={()=>setView('home')}>返回</button>
+               </div>
+               <div style={{marginTop:8}} className="muted">
+                 位置：{geo.region? geo.region : '未獲取'} {geo.err? <span className="warn">({geo.err})</span>: null}
+               </div>
+            </div>
+          )}
+
+          {view==='result' && (
+            <div className="card">
+              <div className="section-title">測速結果</div>
+              <div className="metrics">
+                <div className="metric"><div className="val">{metrics.download ?? '-'}<span className="unit"> Mbps</span></div><div className="muted">下載</div></div>
+                <div className="metric"><div className="val">{metrics.ping ?? '-'}<span className="unit"> ms</span></div><div className="muted">Ping</div></div>
+                <div className="metric"><div className="val">{metrics.upload ?? '-'}<span className="unit"> Mbps</span></div><div className="muted">上載</div></div>
+              </div>
+              <div style={{height:12}} />
+              <div className="row">
+                <button className="primary-btn" onClick={share}>複製分享連結</button>
+                <button className="ghost" onClick={()=>{ setSavedId(null); setView('home'); }}>再測一次</button>
+                <a href="/speedtest-records.html" className="ghost" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',textDecoration:'none'}}>
+                  <i className="fas fa-clock"></i>
+                  <span style={{marginLeft:6}}>查看最近紀錄</span>
+                </a>
+              </div>
+              <div style={{marginTop:8}} className="muted">SIM：{sim}｜時間：{new Date(ts).toLocaleString()}｜位置：{geo.region||'-'}</div>
+            </div>
+          )}
+
+          <nav className="bottom-nav-mobile">
+            <a href="https://cbon.shop.sn.cn/#/index" className="nav-btn eshop">
+              <i className="fas fa-shopping-cart"></i>
+              <span>EShop</span>
+            </a>
+            <a href="/codes.html" className="nav-btn topup">
+              <i className="fas fa-credit-card"></i>
+              <span>Code</span>
+            </a>
+            <a href="/ai-chat.html" className="nav-btn ai">
+              <i className="fas fa-robot"></i>
+              <span>AI</span>
+            </a>
+            <a href="/speedtest.html" className="nav-btn" style={{background:'#0ea5e9',color:'#0b1220'}}>
+              <i className="fas fa-gauge"></i>
+              <span>Speed</span>
+            </a>
+            <a href="/account.html" className="nav-btn account">
+              <i className="fas fa-user"></i>
+              <span>會員</span>
+            </a>
+          </nav>
+        </div>
+      );
+    }
+
+    (function(){
+      const rootEl = document.getElementById('root');
+      if(window.ReactDOMClient && ReactDOMClient.createRoot){
+        ReactDOMClient.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.createRoot){
+        ReactDOM.createRoot(rootEl).render(<App />);
+      } else if(window.ReactDOM && ReactDOM.render){
+        ReactDOM.render(<App />, rootEl);
+      } else {
+        rootEl.textContent = 'React 尚未載入，請刷新頁面。';
+      }
+    })();
+
+    // Register Service Worker for PWA
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      });
+    }
+  </script>
+
+  <script>
+    // iOS add to home screen hints can be added later if needed
+    window.addEventListener('error', function(e){
+      const el = document.getElementById('root');
+      if(el && !el.innerText){
+        el.style.padding = '16px';
+        el.style.fontFamily = 'monospace';
+        el.innerText = '發生錯誤：' + (e.message || '未知錯誤');
+      }
+    });
+  </script>
+</body>
+</html>

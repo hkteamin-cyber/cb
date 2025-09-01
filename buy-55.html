@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國際萬能卡 $55 - CBON 優質服務</title>
+  <meta name="description" content="購買國際萬能卡 $55，支援國際通用，港幣42元優惠價，立即購買即享優質服務">
+  <meta name="keywords" content="國際萬能卡, $55, 港幣42元, 國際通用, 優質服務">
+  <link rel="canonical" href="https://c----b.web.app/buy-55.html">
+  <meta property="og:title" content="國際萬能卡 $55 - CBON 優質服務">
+  <meta property="og:description" content="購買國際萬能卡 $55，支援國際通用，港幣42元優惠價，立即購買即享優質服務">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://c----b.web.app/buy-55.html">
+  <meta property="og:image" content="https://c----b.web.app/images/og-image.jpg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 500px;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .product-image {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 30px;
+      background: linear-gradient(45deg, #FFD700, #FFA500);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: white;
+      box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin: 0 0 10px 0;
+      color: #333;
+      font-weight: 700;
+    }
+
+    .price {
+      font-size: 2em;
+      color: #e74c3c;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .original-price {
+      text-decoration: line-through;
+      color: #95a5a6;
+      font-size: 0.8em;
+      margin-right: 10px;
+    }
+
+    .features {
+      text-align: left;
+      margin: 30px 0;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .features h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-size: 1.2em;
+    }
+
+    .features ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .features li {
+      margin: 8px 0;
+      color: #555;
+    }
+
+    .buy-button {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      font-size: 1.2em;
+      border-radius: 50px;
+      cursor: pointer;
+      width: 100%;
+      margin: 20px 0;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .buy-button:hover:not(.loading) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .buy-button.loading {
+      background: #95a5a6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .buy-button.loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .status-message {
+      background: #f39c12;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .support-link {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .support-link:hover {
+      text-decoration: underline;
+    }
+
+    .security-info {
+      background: #e8f5e8;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      color: #2d5a2d;
+      font-size: 0.9em;
+    }
+
+    .security-info i {
+      color: #27ae60;
+      margin-right: 5px;
+    }
+
+    /* 庫存彈窗樣式 */
+    .stock-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stock-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .stock-modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+
+    .stock-modal.show .stock-modal-content {
+      transform: scale(1);
+    }
+
+    .stock-number {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .stock-number.available {
+      color: #27ae60;
+    }
+
+    .stock-number.out-of-stock {
+      color: #e74c3c;
+    }
+
+    .stock-number.loading {
+      color: #667eea;
+    }
+
+    .update-time {
+      color: #7f8c8d;
+      font-size: 0.9em;
+      margin-bottom: 20px;
+    }
+
+    .points-preview {
+      background: #667eea;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-weight: bold;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #95a5a6;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: #2c3e50;
+    }
+
+    .refresh-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .refresh-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .refresh-btn.loading i {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="product-image">
+      <i class="fas fa-credit-card"></i>
+    </div>
+    
+    <h1>國際萬能卡 $55</h1>
+    
+    <div class="price">
+      <span class="original-price">HK$55</span>
+      HK$42
+    </div>
+    
+    <div class="features">
+      <h3><i class="fas fa-star"></i> 產品特色</h3>
+      <ul>
+        <li>💳 國際通用，支援全球服務</li>
+        <li>⚡ 即時發貨，快速到賬</li>
+        <li>🔒 安全可靠，官方保證</li>
+        <li>🎁 購買即贈 42 積分</li>
+        <li>📞 24/7 客服支援</li>
+      </ul>
+    </div>
+    
+    <div class="security-info">
+      <i class="fas fa-shield-alt"></i>
+      採用 Stripe 國際安全支付，您的資訊受到最高級別保護
+    </div>
+    
+    <button id="buyButton" class="buy-button">
+      <i class="fas fa-shopping-cart"></i>
+      <span>立即購買</span>
+    </button>
+
+    <div id="statusMessage" class="status-message" style="display:none;">
+      <p>暫無庫存，請稍後再試或聯絡客服</p>
+      <a href="mailto:support@cbon.hk" class="support-link">
+        <i class="fas fa-envelope"></i> 聯絡客服
+      </a>
+    </div>
+  </div>
+
+  <!-- 庫存彈窗 -->
+  <div id="stockModal" class="stock-modal">
+    <div class="stock-modal-content">
+      <button id="closeModal" class="modal-close">&times;</button>
+      <h3>庫存檢查</h3>
+      <div id="stockCount" class="stock-number">檢查中...</div>
+      <div id="updateTime" class="update-time">載入中...</div>
+      <div class="points-preview">
+        購買後可獲得 <span id="pointsPreview">42</span> 積分
+      </div>
+      <button id="refreshStock" class="refresh-btn">
+        <i class="fas fa-sync-alt"></i>
+        重新檢查
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const buyButton = document.getElementById('buyButton');
+    const statusMessage = document.getElementById('statusMessage');
+    const stockModal = document.getElementById('stockModal');
+    const stockCount = document.getElementById('stockCount');
+    const updateTime = document.getElementById('updateTime');
+    const closeModal = document.getElementById('closeModal');
+    const refreshStock = document.getElementById('refreshStock');
+    const pointsPreview = document.getElementById('pointsPreview');
+    
+    // 兼容舊版：避免未移除的 showStatus 調用報錯
+    if (typeof window.showStatus !== 'function') {
+      window.showStatus = function () {};
+    }
+
+    // 國際萬能卡 $55 產品配置
+    const STRIPE_URL = 'https://buy.stripe.com/dRm14n5TnfZRgVG5LWdwc03'; // 已更新為實際的 Stripe Checkout URL
+    const PRODUCT_PRICE_HKD = 42; // 港幣 42 元
+    
+    function updatePointsPreview() {
+      const points = Math.round(PRODUCT_PRICE_HKD);
+      pointsPreview.textContent = `${points}`;
+    }
+
+    // 顯示庫存彈窗
+    function showStockModal() {
+      stockModal.classList.add('show');
+      updatePointsPreview();
+      checkStockForModal();
+    }
+
+    // 隱藏庫存彈窗
+    function hideStockModal() {
+      stockModal.classList.remove('show');
+    }
+
+    // 檢查庫存（彈窗用）
+    async function checkStockForModal() {
+      stockCount.textContent = '檢查中...';
+      stockCount.className = 'stock-number loading';
+      updateTime.textContent = '更新中...';
+      try {
+        const resp = await fetch(`/api/stock?productId=55&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const data = await resp.json();
+        const count = Number(data && data.count);
+        stockCount.textContent = isNaN(count) ? '—' : `${count} 組`;
+        if (!isNaN(count)) {
+          stockCount.className = count > 0 ? 'stock-number available' : 'stock-number out-of-stock';
+        } else {
+          stockCount.className = 'stock-number';
+        }
+        updateTime.textContent = `更新時間：${new Date().toLocaleString()}`;
+      } catch (err) {
+        console.error('[Stock Modal] fetch failed:', err);
+        stockCount.textContent = '錯誤';
+        stockCount.className = 'stock-number';
+        updateTime.textContent = '取得失敗';
+      }
+    }
+
+    // 事件監聽
+    closeModal.addEventListener('click', hideStockModal);
+    stockModal.addEventListener('click', (e) => {
+      if (e.target === stockModal) hideStockModal();
+    });
+
+    refreshStock.addEventListener('click', async () => {
+      refreshStock.classList.add('loading');
+      await checkStockForModal();
+      refreshStock.classList.remove('loading');
+    });
+
+    // 購買按鈕邏輯
+    buyButton.addEventListener('click', async () => {
+      // 先顯示庫存彈窗
+      showStockModal();
+
+      buyButton.classList.add('loading');
+      buyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>檢查中...</span>';
+
+      try {
+        const resp = await fetch(`/api/stock?productId=55&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const data = await resp.json();
+        console.log('Stock check response:', data);
+
+        const available = data && (data.available === true || Number(data.count) > 0);
+        if (available) {
+          buyButton.innerHTML = '<i class="fas fa-check"></i><span>建立訂單...</span>';
+          try {
+            const r2 = await fetch('/api/create_checkout_session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId: '55', quantity: 1 })
+            });
+            const s = await r2.json();
+            if (s && s.ok && s.url) {
+              try { localStorage.setItem('CBON_LAST_PRODUCT_ID', '55'); } catch (_) {}
+              window.location.href = s.url;
+              return;
+            }
+            throw new Error((s && s.error) || '建立訂單失敗');
+          } catch (e) {
+            console.error('Create session failed:', e);
+            buyButton.classList.remove('loading');
+            buyButton.innerHTML = '<i class=\"fas fa-exclamation-triangle\"></i><span>下單失敗，重試</span>';
+            return;
+          }
+        } else {
+          statusMessage.style.display = 'block';
+          buyButton.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('檢查庫存失敗:', err);
+        buyButton.classList.remove('loading');
+        buyButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>檢查失敗，點擊重試</span>';
+      }
+    });
+  </script>
+</body>
+</html>

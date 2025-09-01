@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入測試 - CBON</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E🧪%3C/text%3E%3C/svg%3E">
+  <style>
+    body { 
+      background: #0f1115; 
+      color: #fff; 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card { 
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.12); 
+      border-radius: 16px; 
+      padding: 20px; 
+      margin: 20px 0;
+    }
+    .btn { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      padding: 12px 20px; 
+      border-radius: 10px; 
+      border: none; 
+      background: linear-gradient(135deg,#4285F4,#34A853); 
+      color: white; 
+      cursor: pointer; 
+      font-weight: 600;
+    }
+    .status { 
+      padding: 10px; 
+      border-radius: 8px; 
+      margin: 10px 0;
+    }
+    .success { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .error { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .info { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .log { 
+      background: rgba(0,0,0,0.3); 
+      padding: 10px; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 12px; 
+      max-height: 200px; 
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 CBON 登入功能測試</h1>
+  
+  <div class="card">
+    <h3>登入狀態</h3>
+    <div id="authStatus" class="status info">檢查中...</div>
+    <div id="userInfo"></div>
+    
+    <button id="loginBtn" class="btn">🔐 Google 登入</button>
+    <button id="logoutBtn" class="btn" style="background: #6b7280; display: none;">🚪 登出</button>
+  </div>
+  
+  <div class="card">
+    <h3>控制台日誌</h3>
+    <div id="logs" class="log">等待操作...</div>
+  </div>
+
+  <div class="card">
+    <h3>測試結果</h3>
+    <div id="testResults"></div>
+  </div>
+
+  <script type="module">
+    import { signInWithGoogle, signOutUser, waitForAuth } from './js/firebase-config.js';
+
+    const authStatus = document.getElementById('authStatus');
+    const userInfo = document.getElementById('userInfo');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logs = document.getElementById('logs');
+    const testResults = document.getElementById('testResults');
+
+    let logCount = 0;
+
+    function addLog(message, type = 'info') {
+      logCount++;
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `[${timestamp}] ${message}`;
+      logEntry.style.color = type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6';
+      logs.appendChild(logEntry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function updateAuthStatus(user) {
+      if (user) {
+        authStatus.className = 'status success';
+        authStatus.textContent = '✅ 已登入';
+        
+        // 檢查管理員權限
+        const adminEmails = [
+          'admin@cbon.shop',
+          'cbonshare@gmail.com',
+          'demo@example.com'  // 開發模式
+        ];
+        const isAdmin = adminEmails.includes(user.email);
+        
+        userInfo.innerHTML = `
+          <p><strong>用戶ID:</strong> ${user.uid}</p>
+          <p><strong>郵箱:</strong> ${user.email || '未提供'}</p>
+          <p><strong>名稱:</strong> ${user.displayName || '未提供'}</p>
+          <p><strong>類型:</strong> ${user.isDemo ? '開發模式模擬用戶' : '真實用戶'}</p>
+          <p><strong>管理員權限:</strong> <span style="color: ${isAdmin ? '#22c55e' : '#ef4444'}">${isAdmin ? '✅ 是' : '❌ 否'}</span></p>
+        `;
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-flex';
+        
+        addLog(`用戶登入成功: ${user.email || user.uid}`, 'success');
+        addLog(`管理員權限: ${isAdmin ? '是' : '否'}`, isAdmin ? 'success' : 'info');
+      } else {
+        authStatus.className = 'status error';
+        authStatus.textContent = '❌ 未登入';
+        userInfo.innerHTML = '';
+        loginBtn.style.display = 'inline-flex';
+        logoutBtn.style.display = 'none';
+        
+        addLog('用戶未登入', 'info');
+      }
+    }
+
+    // 監聽認證狀態變化
+    window.addEventListener('cbon-auth-changed', (event) => {
+      addLog('收到認證狀態變化事件', 'info');
+      updateAuthStatus(event.detail.user);
+    });
+
+    // 登入按鈕事件
+    loginBtn.addEventListener('click', async () => {
+      addLog('用戶點擊登入按鈕', 'info');
+      try {
+        const user = await signInWithGoogle();
+        addLog('登入函數執行完成', 'success');
+        
+        // 手動檢查登入狀態
+        setTimeout(async () => {
+          const currentUser = await waitForAuth();
+          updateAuthStatus(currentUser);
+        }, 500);
+        
+      } catch (error) {
+        addLog(`登入失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 登出按鈕事件
+    logoutBtn.addEventListener('click', async () => {
+      addLog('用戶點擊登出按鈕', 'info');
+      try {
+        await signOutUser();
+        addLog('登出成功', 'success');
+        updateAuthStatus(null);
+      } catch (error) {
+        addLog(`登出失敗: ${error.message}`, 'error');
+      }
+    });
+
+    // 初始化檢查
+    async function init() {
+      addLog('初始化登入測試頁面', 'info');
+      
+      // 檢查當前登入狀態
+      try {
+        const user = await waitForAuth();
+        updateAuthStatus(user);
+        addLog('初始登入狀態檢查完成', 'success');
+      } catch (error) {
+        addLog(`初始化錯誤: ${error.message}`, 'error');
+      }
+
+      // 運行自動測試
+      setTimeout(runTests, 1000);
+    }
+
+    function runTests() {
+      addLog('開始運行自動測試', 'info');
+      
+      const tests = [
+        {
+          name: 'Firebase 配置檢查',
+          test: () => {
+            return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          }
+        },
+        {
+          name: '登入函數可用性',
+          test: () => {
+            return typeof signInWithGoogle === 'function';
+          }
+        },
+        {
+          name: '登出函數可用性',
+          test: () => {
+            return typeof signOutUser === 'function';
+          }
+        },
+        {
+          name: '等待認證函數可用性',
+          test: () => {
+            return typeof waitForAuth === 'function';
+          }
+        }
+      ];
+
+      let passedTests = 0;
+      const results = tests.map(test => {
+        try {
+          const result = test.test();
+          if (result) passedTests++;
+          return { name: test.name, passed: result };
+        } catch (error) {
+          return { name: test.name, passed: false, error: error.message };
+        }
+      });
+
+      testResults.innerHTML = `
+        <h4>測試結果: ${passedTests}/${tests.length} 通過</h4>
+        ${results.map(result => `
+          <div style="padding: 5px; color: ${result.passed ? '#22c55e' : '#ef4444'}">
+            ${result.passed ? '✅' : '❌'} ${result.name}
+            ${result.error ? ` (錯誤: ${result.error})` : ''}
+          </div>
+        `).join('')}
+      `;
+
+      addLog(`自動測試完成: ${passedTests}/${tests.length} 通過`, passedTests === tests.length ? 'success' : 'error');
+    }
+
+    // 啟動
+    init();
+  </script>
+</body>
+</html>

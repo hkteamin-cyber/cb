@@ -1,0 +1,419 @@
+/* AI Chat 頁面 - 簡潔設計，與主頁風格統一 */
+
+:root {
+    --orange-primary: #ff6b35;
+    --orange-secondary: #ffa726;
+    --text-dark: #333;
+    --text-light: #666;
+    --border-light: #e9ecef;
+    --bg-white: #ffffff;
+    --bg-grey: #f8f9fa;
+}
+
+/* 繼承主頁全局樣式 */
+.mobile-app {
+    background: var(--bg-white);
+    color: var(--text-dark);
+}
+
+/* 簡潔頂部區 */
+.ai-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.back-btn-simple,
+.clear-btn-simple {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-btn-simple:hover,
+.clear-btn-simple:hover {
+    background: var(--bg-grey);
+    color: var(--orange-primary);
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover; /* 防止圖片變形，保持清晰 */
+}
+
+.header-title h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* 聊天區域 */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-grey);
+    padding-bottom: 80px; /* 底部導航空間 */
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 600px; /* 統一中央最大寬度 */
+    margin: 0 auto; /* 水平居中 */
+    width: 100%;
+}
+
+/* 歡迎區域 */
+.welcome-section {
+    background: var(--bg-white);
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+    max-width: 600px; /* 與中心寬度一致 */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.welcome-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.welcome-subtitle {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+}
+
+/* 快速按鈕 */
+.quick-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.quick-btn-simple {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.quick-btn-simple:hover {
+    border-color: var(--orange-primary);
+    background: linear-gradient(135deg, var(--orange-primary), var(--orange-secondary));
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+}
+
+.quick-btn-simple i {
+    font-size: 1.2rem;
+    color: var(--orange-primary);
+}
+
+.quick-btn-simple:hover i {
+    color: white;
+}
+
+.quick-btn-simple span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.quick-btn-simple:hover span {
+    color: white;
+}
+
+/* 訊息氣泡 */
+.message {
+    display: flex;
+    margin-bottom: 1rem;
+    max-width: 80%;
+}
+
+.message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message.bot {
+    align-self: flex-start;
+}
+
+.message-bubble {
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    max-width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.message.user .message-bubble {
+    background: linear-gradient(135deg, var(--orange-primary), var(--orange-secondary));
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.bot .message-bubble {
+    background: var(--bg-white);
+    color: var(--text-dark);
+    border: 1px solid var(--border-light);
+    border-bottom-left-radius: 4px;
+}
+
+/* 滾動按鈕 */
+.scroll-btn-simple {
+    position: fixed;
+    bottom: 100px;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    background: var(--orange-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.scroll-btn-simple.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.scroll-btn-simple.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.scroll-btn-simple:hover {
+    background: var(--orange-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+/* 輸入區域 */
+.input-section {
+    background: var(--bg-white);
+    border-top: 1px solid var(--border-light);
+    padding: 1rem;
+    position: sticky;
+    bottom: 80px; /* 底部導航高度 */
+}
+
+/* 置中輸入容器 */
+.input-section .disclaimer-simple,
+.input-section .input-container,
+.input-section .typing-simple {
+    max-width: 600px; /* 與中心寬度一致 */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 480px) {
+    .chat-messages,
+    .welcome-section,
+    .input-section .disclaimer-simple,
+    .input-section .input-container,
+    .input-section .typing-simple {
+        max-width: 100%;
+    }
+}
+
+.disclaimer-simple {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-grey);
+    border-radius: 24px;
+    padding: 0.25rem;
+    border: 1px solid var(--border-light);
+}
+
+#messageInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1rem;
+    color: var(--text-dark);
+    font-size: 1rem;
+    outline: none;
+}
+
+#messageInput::placeholder {
+    color: var(--text-light);
+}
+
+.send-btn-simple {
+    background: var(--orange-primary);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.send-btn-simple:hover:not(:disabled) {
+    background: var(--orange-secondary);
+    transform: scale(1.05);
+}
+
+.send-btn-simple:disabled {
+    background: var(--text-light);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* 打字指示器 */
+.typing-simple {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+}
+
+.typing-simple.active {
+    display: flex;
+}
+
+.typing-simple span {
+    width: 6px;
+    height: 6px;
+    background: var(--orange-primary);
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-simple span:nth-child(1) { animation-delay: -0.32s; }
+.typing-simple span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 響應式設計 */
+@media (max-width: 480px) {
+    .quick-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+    
+    .welcome-section {
+        padding: 1.5rem 1rem;
+    }
+}
+
+/* 底部導航活躍狀態 */
+.nav-btn.ai.active {
+    color: var(--orange-primary) !important;
+    background: rgba(255, 107, 53, 0.1) !important;
+}
+
+/* 走馬燈圓形圖標按鈕（與全站主色一致） */
+.btn-glow-icon {
+    position: relative;
+    background: linear-gradient(135deg, var(--orange-primary) 0%, #ff8c42 50%, var(--orange-secondary) 100%);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.35);
+    transition: transform 0.15s ease;
+}
+
+.btn-glow-icon .btn-glow {
+    position: absolute;
+    top: 0; left: -40%;
+    width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg);
+    animation: btnShine 2.6s infinite;
+}
+
+.btn-glow-icon:hover {
+    transform: scale(1.05);
+}
+
+/* 覆蓋原本的簡潔按鈕樣式，避免衝突 */
+.clear-btn-simple,
+.send-btn-simple {
+    background: none;
+}
