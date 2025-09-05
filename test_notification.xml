@@ -1,0 +1,1 @@
+<xml><status>0</status><result_code>0</result_code><out_trade_no>TEST123456</out_trade_no><attach><![CDATA[{"productId":"abc","quantity":1}]]></attach><sign><![CDATA[TESTSIGN]]></sign></xml>

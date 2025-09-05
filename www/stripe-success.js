@@ -52,6 +52,7 @@
   const endpointFromStorage = localStorage.getItem('CBON_APPS_SCRIPT_URL');
   const DEFAULT_ENDPOINT = '/api';
   const APPS_SCRIPT_ENDPOINT = endpointFromUrl || endpointFromStorage || DEFAULT_ENDPOINT;
+  
   // 若以絕對 URL 指定 endpoint（例如直接填入 Apps Script Web App URL），則強制走直連（CORS）
   const FORCE_DIRECT = !!(endpointFromUrl && /^https?:\/\//i.test(endpointFromUrl));
   
@@ -137,19 +138,34 @@
   debug.init();
 
   // === JSONP 輔助函數 ===
-  function makeJsonpRequest(url, callback) {
+  function makeJsonpRequest(url) {
     return new Promise((resolve, reject) => {
       const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+      const script = document.createElement('script');
+      let finished = false;
       const timeoutId = setTimeout(() => {
+        if (finished) return; finished = true;
         cleanup();
         reject(new Error('JSONP timeout'));
       }, 15000);
-      function cleanup() { /* ... */ }
-      window[callbackName] = function(data) { /* ... */ };
-      const script = document.createElement('script');
+      function cleanup() {
+        try { delete window[callbackName]; } catch(_) { window[callbackName] = undefined; }
+        const s = document.getElementById(callbackName);
+        if (s && s.parentNode) s.parentNode.removeChild(s);
+        clearTimeout(timeoutId);
+      }
+      window[callbackName] = function(data) {
+        if (finished) return; finished = true;
+        cleanup();
+        resolve(data);
+      };
       script.id = callbackName;
-      script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-      script.onerror = function() { /* ... */ };
+      script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + encodeURIComponent(callbackName);
+      script.onerror = function() {
+        if (finished) return; finished = true;
+        cleanup();
+        reject(new Error('JSONP network error'));
+      };
       document.head.appendChild(script);
     });
   }
@@ -181,15 +197,22 @@
     const joiner = APPS_SCRIPT_ENDPOINT.includes('?') ? '&' : '?';
     const url = `${APPS_SCRIPT_ENDPOINT}${joiner}${qs}`;
     if (debugEnabled && debug.urlEl) debug.urlEl.textContent = url;
-    const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
-    const text = await resp.text();
+    // 先嘗試以 fetch 直接請求（若 Apps Script 啟用了 CORS 或同源）
     try {
-      return JSON.parse(text);
-    } catch (_) {
-      // 嘗試 JSONP 格式
-      const m = text.match(/^[a-zA-Z_$][\w$]*\((.*)\);?\s*$/s);
-      if (m) { try { return JSON.parse(m[1]); } catch (_) {} }
-      throw new Error(`Upstream non-JSON (HTTP ${resp.status})`);
+      const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+      const text = await resp.text();
+      try { return JSON.parse(text); } catch (_) {
+        // 嘗試 JSONP 格式
+        const m = text.match(/^[a-zA-Z_$][\w$]*\((.*)\);?\s*$/s);
+        if (m) { try { return JSON.parse(m[1]); } catch (_) {} }
+        // 若仍無法解析，丟出讓外層改走 JSONP
+        throw new Error(`Upstream non-JSON (HTTP ${resp.status})`);
+      }
+    } catch (e) {
+      // CORS 或解析失敗，回退 JSONP（可跨網域）
+      if (debugEnabled && debug.urlEl) debug.urlEl.textContent = url + '&callback=<jsonp>';
+      const data = await makeJsonpRequest(url);
+      return data;
     }
   }
 
@@ -208,7 +231,6 @@
     try {
       setLoadingUI();
       const currentOrigin = window.location.origin;
-      const productParam = productId ? `&productId=${encodeURIComponent(productId)}` : '';
 
       let data = null;
 
@@ -232,7 +254,6 @@
           console.warn('Redeem via /api failed, trying direct Apps Script...');
           try {
             const d2 = await fetchDirectFromAppsScript({ action: 'redeem', session_id: sessionId, productId, origin: currentOrigin, _: Date.now() });
-            // Apps Script 成功通常回傳 { ok: true, code: 'xxxx' }
             if (d2 && d2.ok && (d2.code || d2.redeem_code)) {
               data = { ok: true, code: d2.code || d2.redeem_code };
             } else {
@@ -240,14 +261,15 @@
             }
           } catch (e2) {
             console.error('Direct Apps Script redeem fallback failed:', e2);
-            // 保留原本 data 錯誤
           }
         }
       }
 
       if (debugEnabled && debug.respEl) debug.respEl.textContent = JSON.stringify(data, null, 2) || '(empty response)';
 
-      if (!data) { throw new Error('服務端錯誤'); }
+      if (!data) {
+        throw new Error('服務端錯誤');
+      }
 
       if (data.ok && data.code) {
         codeValueEl.textContent = data.code;
@@ -261,14 +283,35 @@
         try {
           const uid = window.CBON_UID || localStorage.getItem('CBON_UID') || '';
           if (uid) {
-            const r2 = await fetch('/api/award_points', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ session_id: sessionId, productId, uid })
-            });
-            const awardData = await r2.json();
+            let awardData = null;
+            // 先嘗試同源 API
+            try {
+              const r2 = await fetch('/api/award_points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, productId, uid })
+              });
+              try { awardData = await r2.json(); } catch(_) { awardData = { ok: false, error: `Invalid JSON from /api/award_points (HTTP ${r2.status})` }; }
+            } catch (eApi) {
+              awardData = { ok: false, error: eApi && eApi.message || 'award_points api failed' };
+            }
+
+            // 若失敗且具備 endpoint 設定，改走直連 Apps Script
+            const hasEndpointConfig = !!(endpointFromUrl || endpointFromStorage);
+            if ((!awardData || awardData.ok === false) && hasEndpointConfig) {
+              try {
+                let d3 = await fetchDirectFromAppsScript({ action: 'award_points', session_id: sessionId, productId, uid, origin: window.location.origin, _: Date.now() });
+                if (!(d3 && d3.ok)) {
+                  // 兼容另一個動作名稱
+                  d3 = await fetchDirectFromAppsScript({ action: 'awardPoints', session_id: sessionId, productId, uid, origin: window.location.origin, _: Date.now() });
+                }
+                if (d3 && d3.ok) awardData = { ok: true, points: Number(d3.points) || 0, totalPoints: Number(d3.totalPoints) || 0 };
+              } catch (e3) {
+                console.warn('Direct Apps Script award_points fallback failed:', e3);
+              }
+            }
+
             if (awardData && awardData.ok) {
-              const pts = awardData.points || awardData.totalPoints || 0;
               showPointsToast(awardData.points || 0, awardData.totalPoints);
             }
           }

@@ -27,7 +27,7 @@
         <div class="purchase-header">
           <div class="security-badge">
             <i class="fas fa-shield-alt"></i>
-            <span>Stripe 安全付款</span>
+            <span>安全付款</span>
           </div>
           <h2>國際萬能卡 $82 充值碼</h2>
         </div>
@@ -35,8 +35,14 @@
         <div class="purchase-action">
           <button id="buyButton" class="buy-btn-main">
             <i class="fas fa-bolt"></i>
-            <span>購買充值碼 HK$82</span>
+            <span>信用卡/借記卡付款 HK$82</span>
             <div class="btn-glow"></div>
+          </button>
+          
+          <!-- 支付寶支付按鈕 -->
+          <button id="alipayButton" class="buy-btn-alipay">
+            <i class="fab fa-alipay"></i>
+            <span>支付寶付款</span>
           </button>
         </div>
 
@@ -313,6 +319,40 @@
       animation: spin 1s linear infinite;
     }
 
+    /* 支付寶按鈕樣式 */
+    .buy-btn-alipay {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #00a9f5 0%, #0099e5 100%);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+      box-shadow: 0 5px 15px rgba(0, 169, 245, 0.3);
+      transition: all 0.3s;
+    }
+
+    .buy-btn-alipay:hover:not(.loading) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 169, 245, 0.4);
+    }
+
+    .buy-btn-alipay.loading {
+      background: #95a5a6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .buy-btn-alipay.loading i {
+      animation: spin 1s linear infinite;
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -321,6 +361,7 @@
 
   <script>
     const buyButton = document.getElementById('buyButton');
+    const alipayButton = document.getElementById('alipayButton');
     const statusMessage = document.getElementById('statusMessage');
     const stockModal = document.getElementById('stockModal');
     const stockCount = document.getElementById('stockCount');
@@ -329,16 +370,18 @@
     const refreshStock = document.getElementById('refreshStock');
     const pointsPreview = document.getElementById('pointsPreview');
 
-    // 兼容舊版：避免未移除的 showStatus 調用報錯
-    if (typeof window.showStatus !== 'function') {
-      window.showStatus = function () {};
-    }
+    // 讀取 URL Query 參數中的 productId，預設為 '110'
+    const urlParams = new URLSearchParams(location.search);
+    const PRODUCT_ID = urlParams.get('productId') || '110';
 
-    // 國際萬能卡 $110 產品配置
-    const STRIPE_URL = 'https://buy.stripe.com/dRmdR9a9D291gVGgqAdwc04'; // 已更新為實際的 Stripe Checkout URL
-    // const APPS_SCRIPT_ENDPOINT = localStorage.getItem('CBON_APPS_SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbwhdaWJHQV9sEbcNUP9bQmjjxYTk0HdNif_QKEqunp6fQfyufGiax14l2H36kpBssvyPQ/exec';
-    const PRODUCT_PRICE_HKD = 82; // 港幣 82 元
-    
+    // 設定商品價格（HKD）
+    const PRODUCT_PRICES = {
+      'abc': 9,
+      '55': 42,
+      '110': 82
+    };
+    const PRODUCT_PRICE_HKD = PRODUCT_PRICES[PRODUCT_ID] || PRODUCT_PRICES['110'];
+
     function updatePointsPreview() {
       const points = Math.round(PRODUCT_PRICE_HKD);
       pointsPreview.textContent = `${points} 分`;
@@ -358,26 +401,30 @@
 
     // 檢查庫存（彈窗用）
     async function checkStockForModal() {
-    stockCount.textContent = '檢查中...';
-    stockCount.className = 'stock-number loading';
-    updateTime.textContent = '更新中...';
-    try {
-    const resp = await fetch(`/api/stock?productId=110&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
-    const data = await resp.json();
-    const count = Number(data && data.count);
-    stockCount.textContent = isNaN(count) ? '—' : `${count} 組`;
-    if (!isNaN(count)) {
-    stockCount.className = count > 0 ? 'stock-number available' : 'stock-number out-of-stock';
-    } else {
-    stockCount.className = 'stock-number';
-    }
-    updateTime.textContent = `更新時間：${new Date().toLocaleString()}`;
-    } catch (err) {
-    console.error('[Stock Modal] fetch failed:', err);
-    stockCount.textContent = '錯誤';
-    stockCount.className = 'stock-number';
-    updateTime.textContent = '取得失敗';
-    }
+      try {
+        stockCount.textContent = '檢查中...';
+        stockCount.className = 'stock-number loading';
+        updateTime.textContent = '載入中...';
+
+        const response = await fetch(`/api/stock?productId=${encodeURIComponent(PRODUCT_ID)}&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const data = await response.json();
+
+        if (data && data.ok) {
+          const count = Number(data.count) || 0;
+          stockCount.textContent = count + ' 組';
+          stockCount.className = 'stock-number ' + (count > 0 ? 'available' : 'out-of-stock');
+          updateTime.textContent = new Date(data.ts || Date.now()).toLocaleString();
+        } else {
+          stockCount.textContent = '—';
+          stockCount.className = 'stock-number';
+          updateTime.textContent = '取得失敗';
+        }
+      } catch (err) {
+        console.error('[Stock Modal] fetch failed:', err);
+        stockCount.textContent = '錯誤';
+        stockCount.className = 'stock-number';
+        updateTime.textContent = '取得失敗';
+      }
     }
 
     // 事件監聽
@@ -392,7 +439,7 @@
       refreshStock.classList.remove('loading');
     });
 
-    // 購買按鈕邏輯
+    // 購買按鈕邏輯（信用卡/借記卡）
     buyButton.addEventListener('click', async () => {
       // 先顯示庫存彈窗
       showStockModal();
@@ -401,7 +448,7 @@
       buyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>檢查中...</span>';
 
       try {
-        const resp = await fetch(`/api/stock?productId=110&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const resp = await fetch(`/api/stock?productId=${encodeURIComponent(PRODUCT_ID)}&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
         const data = await resp.json();
         console.log('Stock check response:', data);
 
@@ -412,11 +459,11 @@
             const r2 = await fetch('/api/create_checkout_session', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ productId: '110', quantity: 1 })
+              body: JSON.stringify({ productId: PRODUCT_ID, quantity: 1 })
             });
             const s = await r2.json();
             if (s && s.ok && s.url) {
-              try { localStorage.setItem('CBON_LAST_PRODUCT_ID', '110'); } catch (_) {}
+              try { localStorage.setItem('CBON_LAST_PRODUCT_ID', PRODUCT_ID); } catch (_) {}
               window.location.href = s.url;
               return;
             }
@@ -424,7 +471,7 @@
           } catch (e) {
             console.error('Create session failed:', e);
             buyButton.classList.remove('loading');
-            buyButton.innerHTML = '<i class=\"fas fa-exclamation-triangle\"></i><span>下單失敗，重試</span>';
+            buyButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>下單失敗，重試</span>';
             return;
           }
         } else {
@@ -435,6 +482,63 @@
         console.error('檢查庫存失敗:', err);
         buyButton.classList.remove('loading');
         buyButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>檢查失敗，點擊重試</span>';
+      }
+    });
+
+    // 支付寶支付按鈕邏輯
+    alipayButton.addEventListener('click', async () => {
+      alipayButton.classList.add('loading');
+      alipayButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>檢查中...</span>';
+
+      try {
+        const resp = await fetch(`/api/stock?productId=${encodeURIComponent(PRODUCT_ID)}&_=${Date.now()}`, { method: 'GET', cache: 'no-cache' });
+        const data = await resp.json();
+        console.log('Stock check response:', data);
+
+        const available = data && (data.available === true || Number(data.count) > 0);
+        if (available) {
+          alipayButton.innerHTML = '<i class="fas fa-check"></i><span>建立支付寶訂單...</span>';
+          try {
+            const r2 = await fetch('/api/pay/wepayez/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                productId: PRODUCT_ID, 
+                quantity: 1,
+                payment_inst: 'ALIPAYHK'
+              })
+            });
+            const s = await r2.json();
+            console.log('Alipay create response:', s);
+            if (s && s.ok && (s.pay_info || s.pay_url)) {
+              try { localStorage.setItem('CBON_LAST_PRODUCT_ID', PRODUCT_ID); } catch (_) {}
+              // 重定向到支付寶支付頁面
+              if (s.pay_info) {
+                document.write(s.pay_info);
+              } else if (s.pay_url) {
+                window.location.href = s.pay_url;
+              }
+              return;
+            }
+            // 顯示更詳細的錯誤信息
+            const errorMsg = (s && s.error) || (s && s.raw && s.raw.message) || (s && s.raw && s.raw.err_msg) || '建立支付寶訂單失敗';
+            throw new Error(errorMsg);
+          } catch (e) {
+            console.error('Create Alipay session failed:', e);
+            alipayButton.classList.remove('loading');
+            alipayButton.innerHTML = '<i class="fab fa-alipay"></i><span>支付寶下單失敗，重試</span>';
+            // 顯示具體的錯誤信息給用戶
+            alert('支付寶下單失敗: ' + (e.message || '未知錯誤'));
+            return;
+          }
+        } else {
+          statusMessage.style.display = 'block';
+          alipayButton.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('檢查庫存失敗:', err);
+        alipayButton.classList.remove('loading');
+        alipayButton.innerHTML = '<i class="fab fa-alipay"></i><span>檢查失敗，點擊重試</span>';
       }
     });
   </script>

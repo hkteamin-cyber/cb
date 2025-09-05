@@ -1,6 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, setDoc, serverTimestamp, increment, getDoc, getDocs, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { initializeAppCheck, ReCaptchaV3Provider, getToken as getAppCheckTokenRaw, onTokenChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
 
 // Firebase 配置 - 開發模式
 const firebaseConfig = {
@@ -26,6 +27,47 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 // 強制顯示帳戶選擇（解決 iOS Safari 直接返回不出現帳戶選擇的情況）
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// 初始化 App Check（reCAPTCHA v3），無 site key 時自動跳過
+let appCheck = null;
+let _appCheckToken = null;
+function readAppCheckSiteKey() {
+  try {
+    return window.APP_CHECK_SITE_KEY || document.querySelector('meta[name="appcheck-key"]').content || '';
+  } catch (_) { return ''; }
+}
+(function initAppCheck(){
+  try {
+    const siteKey = readAppCheckSiteKey();
+    if (!siteKey) { console.info('[AppCheck] 未配置 site key，跳過初始化'); return; }
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // 本地開發：使用 Debug Token 以便測試
+      // 請在瀏覽器 Console 查看生成的 Debug Token 並加入 Firebase Console 允許列表
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+    onTokenChanged(appCheck, (tokenResult) => {
+      _appCheckToken = (tokenResult && tokenResult.token) || null;
+      try { window.FIREBASE_APPCHECK_TOKEN = _appCheckToken; } catch(_){}
+    });
+    console.log('[AppCheck] 初始化完成');
+  } catch (e) {
+    console.warn('[AppCheck] 初始化失敗或被跳過：', e && e.message || e);
+  }
+})();
+
+async function getAppCheckToken(forceRefresh = false) {
+  try {
+    if (!appCheck) return null;
+    const res = await getAppCheckTokenRaw(appCheck, !!forceRefresh);
+    return res && res.token || _appCheckToken || null;
+  } catch (_) {
+    return _appCheckToken || null;
+  }
+}
 
 // 認證用戶
 let currentUser = null;
@@ -249,5 +291,6 @@ export {
   getDocs,
   where,
   signInAnonymously,
-  onAuthStateChanged
+  onAuthStateChanged,
+  getAppCheckToken
 };

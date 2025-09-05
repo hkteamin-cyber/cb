@@ -24,11 +24,20 @@ try {
 }
 
 const { onRequest } = require('firebase-functions/v2/https');
-// 新增：使用 Firebase Secrets 管理 Stripe 金鑰
+// 顶部：Secret 定义（文件顶层）
 const { defineSecret } = require('firebase-functions/params');
 const STRIPE_SECRET = defineSecret('STRIPE_SECRET_KEY');
 
-// Prefer env var; fallback to current Apps Script deployment used in the project
+// Keep only these three Wepayez secrets
+const WEPAYEZ_MCH_ID = defineSecret('WEPAYEZ_MCH_ID');
+const WEPAYEZ_API_KEY = defineSecret('WEPAYEZ_API_KEY');
+const WEPAYEZ_PUBLIC_KEY = defineSecret('WEPAYEZ_PUBLIC_KEY'); // for RSA verify if needed
+
+// XML parsing/building
+const { parseStringPromise, Builder } = require('xml2js');
+const WEPAYEZ_MERCHANT_ID = defineSecret('WEPAYEZ_MCH_ID');
+const WEPAYEZ_STORE_ID = defineSecret('WEPAYEZ_STORE_ID'); // 如文档不需要可忽略
+const WEPAYEZ_STORE_PASSWORD = defineSecret('WEPAYEZ_STORE_PASSWORD'); // 如文档不需要可忽略
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxm2K-W_-T1UO7LCKSIaoeSFmfShIz71zRL0C4rVRo19HEVlHUrEvf-H3jJ-7JhxQev6Q/exec';
 
 // Add Stripe SDK
@@ -48,6 +57,8 @@ try { if (!admin.apps.length) { admin.initializeApp(); } } catch (_) {}
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? mask(process.env.STRIPE_SECRET_KEY) : '(none)',
       STRIPE_TEST_SECRET_KEY: process.env.STRIPE_TEST_SECRET_KEY ? mask(process.env.STRIPE_TEST_SECRET_KEY) : '(none)'
     });
+    // 可選：打印 Wepayez base url 來源（不打印敏感值）
+    console.log('[BOOT] Wepayez base url:', process.env.WEPAYEZ_BASE_URL ? '(set)' : '(none)');
   } catch(_) {}
 })();
 
@@ -114,19 +125,23 @@ function checkRateLimit(key, limit, windowMs) {
   return { allowed: b.count <= limit, remaining: Math.max(0, limit - b.count), reset: b.start + windowMs };
 }
 
-exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET] }, async (req, res) => {
+// 方法：exports.api（函数开头）
+exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET, WEPAYEZ_MCH_ID, WEPAYEZ_API_KEY, WEPAYEZ_PUBLIC_KEY] }, async (req, res) => {
   try {
     const path = (req.path || '').replace(/^(\/api)*\/?/, '/');
     const method = (req.method || 'GET').toUpperCase();
     const origin = req.get('origin') || req.get('referer') || '';
 
-    // Global: block direct Cloud Functions URL access (must come via Hosting or localhost)
-    if (!isFromHosting(req)) {
+    // 允许第三方支付平台直接访问的回调路由（不会经过 Hosting）
+    const allowExternal = (path === '/pay/wepayez/notify');
+
+    // Global: block direct Cloud Functions URL access (must come via Hosting or localhost), but allow payment notify
+    if (!allowExternal && !isFromHosting(req)) {
       return sendJson(res, { ok: false, error: 'Forbidden: requests must come via Hosting' }, 403);
     }
 
     // Optional: enforce Firebase App Check for all API calls
-    if (APP_CHECK_REQUIRED) {
+    if (APP_CHECK_REQUIRED && !allowExternal) {
       try {
         const appCheckToken = req.get('x-firebase-appcheck') || '';
         if (!appCheckToken) return sendJson(res, { ok: false, error: 'Missing App Check token' }, 401);
@@ -137,8 +152,213 @@ exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET] }, asyn
       }
     }
 
+    // 小工具：获取客户 IP（mch_create_ip）
+    function getClientIp() {
+      const xff = (req.get('x-forwarded-for') || '').split(',')[0].trim();
+      return xff || req.ip || '127.0.0.1';
+    }
+
+    // 小工具：随机串
+    function genNonceStr(len = 24) {
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let s = '';
+      for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+      return s;
+    }
+
+    // 参数排序 & 拼接：k1=v1&k2=v2（不包含 sign，忽略空值，不做 URL 编码）
+    function sortAndJoin(obj) {
+      return Object.keys(obj)
+        .filter(k => obj[k] !== undefined && obj[k] !== null && obj[k] !== '' && k !== 'sign' && k !== 'signature')
+        .sort()
+        .map(k => `${k}=${obj[k]}`)
+        .join('&');
+    }
+
+    // 签名：遵循文档
+    // sign = SHA256( 原串 &key=商户密钥 ).toUpperCase()
+    // RSA_1_256：对原串做 RSA-SHA256 签名（不追加 &key）
+    function signParams(params, signType, apiKey, privateKeyPem) {
+      const base = sortAndJoin(params);
+      if (signType === 'SHA256') {
+        const data = `${base}&key=${apiKey}`;
+        const digest = require('crypto').createHash('sha256').update(data, 'utf8').digest('hex');
+        return digest.toUpperCase();
+      }
+      if (signType === 'RSA_1_256' && privateKeyPem) {
+        const signer = require('crypto').createSign('RSA-SHA256');
+        signer.update(base, 'utf8');
+        return signer.sign(privateKeyPem, 'base64');
+      }
+      return '';
+    }
+
+    // XML 构建/解析
+    const xmlBuilder = new Builder({ headless: true, rootName: 'xml' });
+    async function parseXml(text) {
+      const obj = await parseStringPromise(text, { explicitArray: false, trim: true });
+      return obj && obj.xml ? obj.xml : obj;
+    }
+
     // Normalize inputs from either query or JSON body
     const q = Object.assign({}, req.query, (req.body && typeof req.body === 'object') ? req.body : {});
+
+    // 新增：创建 Wepayez 支付订单（WAP）
+    if (path === '/pay/wepayez/create' && method === 'POST') {
+      // 价格映射（单位：分）
+      const pricesHKD = { 'abc': 900, '55': 4200, '110': 8200 };
+      const productId = String(q.productId || 'abc');
+      const quantity = Math.max(1, Number(q.quantity || 1));
+      const totalFee = (pricesHKD[productId] || pricesHKD['abc']) * quantity; // 分
+
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const forwardedProto = req.get('x-forwarded-proto');
+      const isLocal = host && /^(localhost|127\.0\.0\.1)(:\\d+)?$/.test(host);
+      const proto = isLocal ? 'http' : (forwardedProto || req.protocol || 'https');
+      const baseUrl = `${proto}://${host}`;
+
+      const notify_url = `${baseUrl}/api/pay/wepayez/notify`;
+      const callback_url = `${baseUrl}/success.html?pay=wepayez`; // 同步页仅作提示
+
+      const mch_id = (WEPAYEZ_MCH_ID.value() || process.env.WEPAYEZ_MCH_ID || '').trim();
+      const api_key = (WEPAYEZ_API_KEY.value() || process.env.WEPAYEZ_API_KEY || '').trim();
+      const sign_type = 'SHA256'; // 如要切换 RSA_1_256，请调整此处并提供私钥
+
+      if (!mch_id || !api_key) {
+        return sendJson(res, { ok: false, error: 'Wepayez not configured: set WEPAYEZ_MCH_ID / WEPAYEZ_API_KEY secrets' }, 500);
+      }
+
+      const out_trade_no = `WEZ${Date.now()}${Math.floor(Math.random()*10000)}`;
+      const params = {
+        service: 'pay.alipay.wappay.intl',
+        version: '2.0',
+        charset: 'UTF-8',
+        sign_type,
+        mch_id,
+        out_trade_no,
+        body: q.body || `C BON 充值-${productId}`,
+        attach: q.attach || encodeURIComponent(JSON.stringify({ productId, quantity })),
+        total_fee: String(totalFee),
+        mch_create_ip: getClientIp(),
+        payment_inst: q.payment_inst || 'ALIPAYHK', // HKD: ALIPAYHK 或 ALIPAYCN
+        notify_url,
+        callback_url, // 仅本地钱包支持
+        nonce_str: genNonceStr()
+      };
+
+      const sign = signParams(params, sign_type, api_key, /*privateKeyPem*/ null);
+      const xml = xmlBuilder.buildObject({ ...params, sign });
+
+      console.log('Wepayez request params:', params);
+      console.log('Wepayez request XML:', xml);
+
+      const resp = await fetch('https://gateway.wepayez.com/pay/gateway', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/xml; charset=utf-8' },
+        body: xml
+      });
+      const text = await resp.text();
+      console.log('Wepayez response:', text);
+      
+      let parsed = {};
+      try { parsed = await parseXml(text); } catch (e) {
+        console.error('Wepayez create parse XML error:', e, text);
+        return sendJson(res, { ok: false, error: 'Bad XML from gateway', raw: text }, 502);
+      }
+
+      if (String(parsed.status) === '0' && String(parsed.result_code) === '0') {
+        return sendJson(res, { 
+          ok: true, 
+          out_trade_no, 
+          pay_info: parsed.pay_info || '', 
+          pay_url: parsed.pay_url || '',
+          raw: parsed 
+        });
+      }
+      return sendJson(res, { ok: false, error: parsed.err_msg || parsed.message || 'Gateway error', raw: parsed }, 502);
+    }
+
+    // 新增：Wepayez 异步通知（XML）
+    if (path === '/pay/wepayez/notify' && (method === 'POST')) {
+      const ctype = (req.get('content-type') || '').toLowerCase();
+      const xmlBody = (req.rawBody && req.rawBody.length) ? req.rawBody.toString('utf8') : (typeof req.body === 'string' ? req.body : '');
+      if (!/xml/.test(ctype) && !xmlBody) {
+        return res.status(400).set('Content-Type', 'text/plain; charset=utf-8').send('bad request');
+      }
+      let data = {};
+      try { data = await parseXml(xmlBody); } catch (e) {
+        console.error('notify parse error:', e, xmlBody);
+        return res.status(400).set('Content-Type', 'text/plain; charset=utf-8').send('fail');
+      }
+
+      // 验签（若平台在“第4章签名规则”要求与下单一致，走同一签名规则）
+      const api_key = WEPAYEZ_API_KEY.value() || process.env.WEPAYEZ_API_KEY || '';
+      const sign_type = String(data.sign_type || 'SHA256').toUpperCase();
+      const { sign, ...toVerify } = data;
+      const base = sortAndJoin(toVerify);
+
+      let verified = false;
+      if (sign_type === 'SHA256') {
+        const expect = require('crypto')
+          .createHash('sha256')
+          .update(`${base}&key=${api_key}`, 'utf8')
+          .digest('hex')
+          .toUpperCase();
+        verified = (sign === expect);
+      } else if (sign_type === 'RSA_1_256') {
+        const publicKeyPem = (WEPAYEZ_PUBLIC_KEY && WEPAYEZ_PUBLIC_KEY.value && WEPAYEZ_PUBLIC_KEY.value()) || process.env.WEPAYEZ_PUBLIC_KEY || '';
+        if (!publicKeyPem) {
+          console.warn('notify missing public key for RSA_1_256');
+          return res.status(200).set('Content-Type', 'text/plain; charset=utf-8').send('fail');
+        }
+        try {
+          const verifier = require('crypto').createVerify('RSA-SHA256');
+          verifier.update(base, 'utf8');
+          verified = verifier.verify(publicKeyPem, String(sign), 'base64');
+        } catch (e) {
+          console.warn('notify RSA verify error:', e && e.message || e);
+          verified = false;
+        }
+      }
+
+      // 验签失败，返回协议级错误
+      if (!verified) {
+        console.warn('notify invalid sign', { data });
+        return res.status(200).set('Content-Type', 'text/plain; charset=utf-8').send('fail');
+      }
+
+      // 检查 status 参数，0 表示调用成功，非 0 表示调用失败
+      const status = String(data.status || '');
+      
+      // 协议级错误（status 非 0）
+      if (status !== '0') {
+        // 根据规范，协议级错误应返回 'success' 以确认收到通知
+        return res.status(200).set('Content-Type', 'text/plain; charset=utf-8').send('success');
+      }
+
+      // 业务级检查：result_code 为 0 才视为支付成功
+      if (String(data.result_code) !== '0') {
+        // 业务级错误，同样返回 'success' 以确认收到通知
+        return res.status(200).set('Content-Type', 'text/plain; charset=utf-8').send('success');
+      }
+
+      const out_trade_no = data.out_trade_no || '';
+      let productId = '';
+      try {
+        const att = data.attach ? decodeURIComponent(data.attach) : '';
+        if (att) { const j = JSON.parse(att); productId = j.productId || ''; }
+      } catch (_) {}
+
+      // TODO：此处对接“即买即发”发码逻辑（建议幂等控制）
+      // 例如：
+      // 使用 out_trade_no 作为 session_id
+      if (out_trade_no) {
+        await callAppsScript({ action: 'redeem', session_id: out_trade_no, productId, origin: 'wepayez' });
+      }
+
+      // 回应平台（大多数网关要求返回 success）
+      return res.status(200).set('Content-Type', 'text/plain; charset=utf-8').send('success');
+    }
 
     if (path === '/stock' && method === 'GET') {
       const productId = String(q.productId || 'abc');
@@ -296,6 +516,7 @@ exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET] }, asyn
       }
     }
 
+    // 方法：exports.api（位于 /speedtest_upload 处理器之后）
     if (path === '/speedtest_upload' && method === 'POST') {
       // Rate limit
       const key = 'ul:' + getClientKey(req);
@@ -326,6 +547,11 @@ exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET] }, asyn
       }
     }
 
+    // 仅保留同步返回（return）路由
+    if (path === '/pay/wepayez/return' && method === 'GET') {
+      return res.status(302).set('Location', '/success.html?pay=wepayez').end();
+    }
+
     // Fallback 404 for unknown routes
     return sendJson(res, { ok: false, error: 'Not Found' }, 404);
   } catch (err) {
@@ -333,3 +559,73 @@ exports.api = onRequest({ region: 'asia-east2', secrets: [STRIPE_SECRET] }, asyn
     return sendJson(res, { ok: false, error: 'Internal Error', details: String(err && err.message || err) }, 500);
   }
 });
+
+// 文件末尾：仅保留工具函数（删除重复的第二个 exports.api）
+const crypto = require('crypto');
+
+function sortParams(obj) {
+  return Object.keys(obj)
+    .filter(k => obj[k] !== undefined && obj[k] !== null && obj[k] !== '' && k !== 'sign' && k !== 'signature')
+    .sort()
+    .map(k => `${k}=${obj[k]}`)
+    .join('&');
+}
+
+// TODO: 根据平台文档选择签名算法（例如 HMAC-SHA256 / MD5 / RSA2 等）
+function wepayezSign(params, signType, apiKey, privateKeyPem) {
+  const base = sortParams(params);
+  if (!signType) return '';
+  if (signType.toUpperCase() === 'HMAC-SHA256') {
+    return crypto.createHmac('sha256', apiKey).update(base).digest('hex').toUpperCase();
+  }
+  if (signType.toUpperCase() === 'MD5') {
+    return crypto.createHash('md5').update(base + '&key=' + apiKey).digest('hex').toUpperCase();
+  }
+  if (signType.toUpperCase() === 'RSA2') {
+    const signer = crypto.createSign('RSA-SHA256');
+    signer.update(base);
+    return signer.sign(privateKeyPem, 'base64');
+  }
+  return '';
+}
+
+// TODO: 按平台文档实现验签（回调）
+function wepayezVerifySign(params, signType, apiKey, publicKeyPem) {
+  const { sign, signature, ...rest } = params || {};
+  const sig = sign || signature || '';
+  const base = sortParams(rest);
+  if (!sig) return false;
+  if (signType.toUpperCase() === 'HMAC-SHA256') {
+    const expect = crypto.createHmac('sha256', apiKey).update(base).digest('hex').toUpperCase();
+    return sig === expect;
+  }
+  if (signType.toUpperCase() === 'MD5') {
+    const expect = crypto.createHash('md5').update(base + '&key=' + apiKey).digest('hex').toUpperCase();
+    return sig === expect;
+  }
+  if (signType.toUpperCase() === 'RSA2') {
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(base);
+    try { return verifier.verify(publicKeyPem, sig, 'base64'); } catch { return false; }
+  }
+  return false;
+}
+
+// 兼容多种“成功态”字段（待按文档精确化）
+function isPaySuccess(p) {
+  const v = String(
+    p.trade_status || p.pay_status || p.status || p.resultCode || p.result || ''
+  ).toUpperCase();
+  return ['SUCCESS', 'TRADE_SUCCESS', 'PAID', '2'].includes(v);
+}
+
+// 价格映射（HKD 分）
+const pricesHKD = { 'abc': 900, '55': 4200, '110': 8200 };
+
+// Fallback 404 for unknown routes
+// return sendJson(res, { ok: false, error: 'Not Found' }, 404);
+// } catch (err) {
+// console.error(err);
+// return sendJson(res, { ok: false, error: 'Internal Error', details: String(err && err.message || err) }, 500);
+// }
+// });

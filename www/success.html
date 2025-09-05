@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>付款成功 - 自動派碼</title>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="css/style.css" />
   <style>
     /* 簡潔的成功頁樣式（就地最小可用版本） */
     body { background: #0f1115; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }
@@ -71,7 +71,7 @@
   </div>
 
   <script type="module">
-    import { auth } from './firebase-config.js';
+    import { auth } from './js/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     onAuthStateChanged(auth, (user) => {
       if (user && user.uid) {
@@ -80,6 +80,6 @@
       }
     });
   </script>
-  <script src="stripe-success.js"></script>
+  <script src="js/stripe-success.js?v=20250901"></script>
 </body>
 </html>

@@ -413,49 +413,37 @@
       }
     }
 
+    // 額外：iOS/Safari 從外部返回或分頁切換回可見時，強制刷新狀態
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('visibilitychange -> visible, refreshing UI');
+        refreshUI();
+      }
+    });
+
+    // 若在 iOS Safari 上，主動將登入流程設為 redirect 兜底（避免無提示直接返回）
+    function isIOSSafari() {
+      const ua = navigator.userAgent;
+      const isIOS = /iP(hone|od|ad)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+      return isIOS && isSafari;
+    }
+
     loginBtn.addEventListener('click', async () => {
-      try { 
+      try {
         console.log('登入按鈕被點擊');
-        
-        // 如果是移動設備，提供額外的提示
-        if (isMobileDevice()) {
-          console.log('檢測到移動設備，使用針對性登錄方式');
+
+        // 在 iOS Safari 上，確保一定走 redirect 流程（firebase-config 內已會自動 fallback）
+        if (isIOSSafari()) {
+          console.log('iOS Safari 檢測到，將使用重定向登入');
         }
-        
+
         await signInWithGoogle();
-        
-        // 在開發模式下，手動觸發 UI 更新
-        setTimeout(() => {
-          refreshUI();
-        }, 200);
-        
-      } catch(e) { 
+
+        setTimeout(() => { refreshUI(); }, 200);
+      } catch (e) {
         console.error('登入錯誤:', e);
-        
-        // 根據錯誤類型提供不同的提示
-        let errorMessage = '登入失敗，請稍後重試';
-        let showFixHelper = false;
-        
-        if (e.code === 'auth/popup-blocked') {
-          errorMessage = '彈窗被阻止，請允許彈窗或使用修復助手';
-          showFixHelper = true;
-        } else if (e.code === 'auth/operation-not-supported-in-this-environment') {
-          errorMessage = '當前環境不支援彈窗登錄，將自動使用重定向登錄';
-        } else if (e.code === 'auth/popup-closed-by-user') {
-          errorMessage = '登錄窗口被關閉，請再試一次';
-        } else if (e.message && e.message.includes('network')) {
-          errorMessage = '網路連接問題，請檢查網路後重試';
-        }
-        
-        // 如果是移動設備且遇到關鍵錯誤，顯示修復助手
-        if (isMobileDevice() && (showFixHelper || e.code === 'auth/popup-blocked')) {
-          const showHelper = confirm(`${errorMessage}\n\n是否打開手機登錄修復助手？`);
-          if (showHelper) {
-            window.open('mobile-login-fix.html', '_blank');
-          }
-        } else {
-          alert(errorMessage);
-        }
+        alert('登入失敗，請稍後重試');
       }
     });
     logoutBtn.addEventListener('click', async () => {
@@ -510,7 +498,13 @@
     // iOS/Safari：監聽登入狀態變化（例如 Google Redirect 回來後），自動刷新 UI
     onAuthStateChanged(auth, () => {
       console.log('Auth state changed, refreshing UI');
-      refreshUI();
+      // 處理 iOS/Safari BFCache（返回或重載後確保 UI 與登入狀態同步）
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) {
+          console.log('pageshow from BFCache, refreshing UI');
+        }
+        refreshUI();
+      });
     });
 
     refreshUI();

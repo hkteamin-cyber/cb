@@ -524,13 +524,15 @@
             }
             
             // 若過高，使用更積極的修正公式（對 5G/4G/WiFi 限制更嚴）
+            // 調整修正邏輯，使其更接近原始值，減少平滑效果
             const excess = raw - baseline.acceptable;
-            let dampened = baseline.acceptable + Math.log(1 + excess * 0.08) * 8;
+            let dampened = baseline.acceptable + excess * 0.5; // 減小修正幅度
 
             const isFast = (networkType === '5G' || networkType === '4G' || networkType === 'WiFi');
-            const upperCap = isFast ? baseline.acceptable * 1.2 : baseline.acceptable * 1.5;
+            const upperCap = isFast ? baseline.acceptable * 1.5 : baseline.acceptable * 2.0; // 提高上限
             let adjusted = Math.max(baseline.ideal, Math.min(dampened, upperCap));
-            if (isFast) adjusted = Math.max(baseline.ideal, adjusted - 5); // 微幅扣減，平滑視覺感受
+            // 不再進行微幅扣減，讓數據更真實
+            // if (isFast) adjusted = Math.max(baseline.ideal, adjusted - 5); // 微幅扣減，平滑視覺感受
             return adjusted;
           };
           
@@ -600,14 +602,15 @@
               '2G': { ideal: 0.1, max: 1 }
             };
             const baseline = baselines[networkType] || baselines['4G'];
-            if (raw < baseline.ideal * 0.3) {
-              // 過低時提升到合理底線（保守處理，避免顯示過差）
-              return baseline.ideal * 0.6;
+            // 調整修正邏輯，使其更接近原始值，減少平滑效果
+            if (raw < baseline.ideal * 0.5) {
+              // 過低時提升到合理底線（保守處理，避免顯示過差），但幅度減小
+              return baseline.ideal * 0.8;
             }
             if (raw > baseline.max) {
-              // 極高值做壓縮，避免離群極端值影響觀感
+              // 極高值做壓縮，避免離群極端值影響觀感，但壓縮幅度減小
               const excess = raw - baseline.max;
-              return Math.min(baseline.max + Math.log(1 + excess * 0.05) * 20, baseline.max * 1.2);
+              return Math.min(baseline.max + excess * 0.2, baseline.max * 1.5); // 減小壓縮幅度，提高上限
             }
             return raw;
           };
